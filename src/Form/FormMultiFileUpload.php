@@ -35,7 +35,7 @@ class FormMultiFileUpload extends Upload
      *
      * @var bool
      */
-    protected $blnSubmitInput = true;
+    protected $submitInput = true;
 
     /**
      * @var string
@@ -47,7 +47,7 @@ class FormMultiFileUpload extends Upload
      *
      * @var bool
      */
-    protected $blnSingleFile = false;
+    protected $singleFile = false;
 
     public function __construct($attributes = null)
     {
@@ -58,25 +58,12 @@ class FormMultiFileUpload extends Upload
         }
 
         // check against arrAttributes, as 'onsubmit_callback' => 'multifileupload_moveFiles' does not provide valid attributes
-        if (!$attributes['isSubmitCallback'] && !$attributes['uploadFolder']) {
+        if (!isset($attributes['isSubmitCallback']) && !isset($attributes['uploadFolder'])) {
             throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['noUploadFolderDeclared'], $this->name));
         }
 
-        if (null !== $attributes && $attributes['strTable']) {
-            // no database field (e.g. multi_column_editor)
-            if (!System::getContainer()->get('contao.framework')->createInstance(Database::class)->fieldExists($attributes['name'], $attributes['strTable']) && 'radio' === $attributes['fieldType']) {
-                $this->blnSingleFile = true;
-            } // field exists, check database field type
-            else {
-                $arrTableFields = System::getContainer()->get('contao.framework')->createInstance(Database::class)->listFields($attributes['strTable']);
-
-                foreach ($arrTableFields as $arrField) {
-                    if ($arrField['name'] === $attributes['name'] && 'index' !== $arrField['type'] && 'binary' === $arrField['type']) {
-                        $this->blnSingleFile = true;
-                        break;
-                    }
-                }
-            }
+        if (isset($attributes['strTable'])) {
+            $this->isSingleFile($attributes);
         }
 
         $attributes['uploadAction'] = $this->uploadAction;
@@ -89,12 +76,12 @@ class FormMultiFileUpload extends Upload
 
         $attributes['addRemoveLinks'] = isset($attributes['addRemoveLinks']) ? $attributes['addRemoveLinks'] : true;
 
-        if (!is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
+        if (isset($attributes['value']) && !is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
             $attributes['value'] = json_decode($attributes['value']);
         }
 
         // bin to string -> never pass binary to the widget!!
-        if ($attributes['value']) {
+        if (isset($attributes['value'])) {
             if (is_array($attributes['value'])) {
                 $attributes['value'] = array_map(function ($val) {
                     return Validator::isBinaryUuid($val) ? StringUtil::binToUuid($val) : $val;
@@ -110,17 +97,13 @@ class FormMultiFileUpload extends Upload
 
         $this->objUploader = new MultiFileUpload($attributes, $this);
 
-        $attributes = array_merge($attributes, $this->objUploader->getData());
-
-        foreach ($attributes as $strKey => $varValue) {
-            $this->{$strKey} = $varValue;
-        }
+        $this->setAttributes($attributes);
 
         // add onsubmit_callback at first onsubmit_callback position: move files after form submission
         if (is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'])) {
             $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']] + $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'];
         } else {
-            $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback']['multifileupload_moveFiles'] = ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles'];
+            $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']];
         }
 
         System::getContainer()->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
@@ -206,6 +189,8 @@ class FormMultiFileUpload extends Upload
 
     public function upload()
     {
+        $arrUuids = [];
+        $varReturn = null;
         // check for the request token
         if (!System::getContainer()->get('huh.request')->hasPost('requestToken') || !\RequestToken::validate(System::getContainer()->get('huh.request')->getPost('requestToken'))) {
             $objResponse = new ResponseError();
@@ -219,17 +204,14 @@ class FormMultiFileUpload extends Upload
 
         $objTmpFolder = new \Folder(MultiFileUpload::UPLOAD_TMP);
 
-        // contao 4 support, create tmp dir symlink
-        if (version_compare(VERSION, '4.0', '>=')) {
-            // tmp directory is not public, mandatory for preview images
-            if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.MultiFileUpload::UPLOAD_TMP)) {
-                $objTmpFolder->unprotect();
-                $command = new SymlinksCommand();
-                $command->setContainer(System::getContainer());
-                $input = new ArrayInput([]);
-                $output = new NullOutput();
-                $command->run($input, $output);
-            }
+        // tmp directory is not public, mandatory for preview images
+        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.MultiFileUpload::UPLOAD_TMP)) {
+            $objTmpFolder->unprotect();
+            $command = new SymlinksCommand();
+            $command->setContainer(System::getContainer());
+            $input = new ArrayInput([]);
+            $output = new NullOutput();
+            $command->run($input, $output);
         }
 
         $strField = $this->name;
@@ -243,14 +225,14 @@ class FormMultiFileUpload extends Upload
                 $objResponse->output();
             }
 
-            /**
+            /*
              * @var UploadedFile
              */
             foreach ($varFile as $strKey => $objFile) {
                 $arrFile = $this->uploadFile($objFile, $objTmpFolder->path);
                 $varReturn[] = $arrFile;
 
-                if (\Validator::isUuid($arrFile['uuid'])) {
+                if (isset($varReturn['uuid']) && Validator::isUuid($arrFile['uuid'])) {
                     $arrUuids[] = $arrFile['uuid'];
                 }
             }
@@ -261,7 +243,7 @@ class FormMultiFileUpload extends Upload
              */
             $varReturn = $this->uploadFile($varFile, $objTmpFolder->path);
 
-            if (\Validator::isUuid($varReturn['uuid'])) {
+            if (isset($varReturn['uuid']) && Validator::isUuid($varReturn['uuid'])) {
                 $arrUuids[] = $varReturn['uuid'];
             }
         }
@@ -351,7 +333,7 @@ class FormMultiFileUpload extends Upload
             $arrFiles = StringUtil::uuidToBin($arrFiles);
         }
 
-        return $this->blnSingleFile ? reset($arrFiles) : $arrFiles;
+        return $this->singleFile ? reset($arrFiles) : $arrFiles;
     }
 
     public function getUploader()
@@ -377,6 +359,41 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
+     * @param array $attributes
+     */
+    public function setAttributes(array $attributes)
+    {
+        if (null !== $this->objUploader && is_array($this->objUploader->getData())) {
+            $attributes = array_merge($attributes, $this->objUploader->getData());
+        }
+
+        foreach ($attributes as $strKey => $varValue) {
+            $this->{$strKey} = $varValue;
+        }
+    }
+
+    /**
+     * @param array $attributes
+     */
+    public function isSingleFile(array $attributes)
+    {
+        // no database field (e.g. multi_column_editor)
+        if (!System::getContainer()->get('contao.framework')->createInstance(Database::class)->fieldExists($attributes['name'], $attributes['strTable']) && 'radio' === $attributes['fieldType']) {
+            $this->singleFile = true;
+        } else {
+            // field exists, check database field type
+            $arrTableFields = System::getContainer()->get('contao.framework')->createInstance(Database::class)->listFields($attributes['strTable']);
+
+            foreach ($arrTableFields as $arrField) {
+                if ($arrField['name'] === $attributes['name'] && 'index' !== $arrField['type'] && 'binary' === $arrField['type']) {
+                    $this->singleFile = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * Validate a given extension.
      *
      * @param UploadedFile $objUploadFile The uploaded file object
@@ -389,7 +406,7 @@ class FormMultiFileUpload extends Upload
 
         $strAllowed = $this->extensions ?: \Config::get('uploadTypes');
 
-        $arrAllowed = trimsplit(',', $strAllowed);
+        $arrAllowed = StringUtil::trimsplit(',', $strAllowed);
 
         $strExtension = $objUploadFile->getClientOriginalExtension();
 
@@ -500,7 +517,7 @@ class FormMultiFileUpload extends Upload
 
         $error = false;
 
-        $strTargetFileName = System::getContainer()->get('huh.utils.file')->addUniqIdToFilename($strSanitizedFileName, static::UNIQID_PREFIX);
+        $strTargetFileName = System::getContainer()->get('huh.utils.file')->addUniqueIdToFilename($strSanitizedFileName, static::UNIQID_PREFIX);
 
         if (false !== ($error = $this->validateExtension($uploadFile))) {
             return [
@@ -533,7 +550,7 @@ class FormMultiFileUpload extends Upload
 
         try {
             // add db record
-            $objFile = new File($strRelativePath);
+            $objFile = System::getContainer()->get('contao.framework')->createInstance(File::class, [$strRelativePath]);
             $objModel = $objFile->getModel();
 
             // Update the database
@@ -541,7 +558,7 @@ class FormMultiFileUpload extends Upload
                 $objModel = Dbafs::addResource($strRelativePath);
             }
 
-            $strUuid = $objFile->getModel()->uuid;
+            $strUuid = $objModel->uuid;
         } catch (\InvalidArgumentException $e) {
             // remove file from file system
             @unlink(TL_ROOT.'/'.$strRelativePath);

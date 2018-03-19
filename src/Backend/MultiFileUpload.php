@@ -82,7 +82,7 @@ class MultiFileUpload extends FileUpload
 
         $this->isXhtml = ('xhtml' === $objPage->outputFormat);
 
-        if (!$attributes['isSubmitCallback']) {
+        if (!isset($attributes['isSubmitCallback'])) {
             $this->loadDcaConfig();
         }
     }
@@ -228,12 +228,12 @@ class MultiFileUpload extends FileUpload
     public function prepareFile($uuid)
     {
         if (null !== ($objFile = System::getContainer()->get('huh.utils.file')->getFileFromUuid($uuid)) && $objFile->exists()) {
-            static::addAllowedDownload($objFile->value);
+            $this->addAllowedDownload($objFile->value);
 
             $arrReturn = [
                 // remove timestamp from filename
-                'name' => System::getContainer()->get('huh.utils.string')->preg_replace_last('@_[a-f0-9]{13}@', $objFile->name),
-                'uuid' => System::getContainer()->get('huh.utils.string')->binToUuid($objFile->getModel()->uuid),
+                'name' => System::getContainer()->get('huh.utils.string')->pregReplaceLast('@_[a-f0-9]{13}@', $objFile->name),
+                'uuid' => StringUtil::binToUuid($objFile->getModel()->uuid),
                 'size' => $objFile->filesize,
             ];
 
@@ -254,7 +254,7 @@ class MultiFileUpload extends FileUpload
     /**
      * @param string $file
      */
-    public static function addAllowedDownload(string $file)
+    public function addAllowedDownload(string $file)
     {
         $arrDownloads = System::getContainer()->get('session')->get(static::SESSION_ALLOWED_DOWNLOADS);
 
@@ -301,11 +301,11 @@ class MultiFileUpload extends FileUpload
     {
         // Convert the value to bytes
         if (false !== stripos($size, 'K')) {
-            $size = round($size * 1024);
+            $size = round(explode('K', $size)[0] * 1024);
         } elseif (false !== stripos($size, 'M')) {
-            $size = round($size * 1024 * 1024);
+            $size = round(explode('M', $size)[0] * 1024 * 1024);
         } elseif (false !== stripos($size, 'G')) {
-            $size = round($size * 1024 * 1024 * 1024);
+            $size = round(explode('G', $size)[0] * 1024 * 1024 * 1024);
         }
 
         return $size;
@@ -366,7 +366,7 @@ class MultiFileUpload extends FileUpload
 
         $this->acceptedFiles = implode(',', array_map(function ($a) {
             return '.'.$a;
-        }, trimsplit(',', strtolower($this->extensions ?: \Config::get('uploadTypes')))));
+        }, StringUtil::trimsplit(',', strtolower($this->extensions ?: \Config::get('uploadTypes')))));
 
         // labels & messages
         $this->labels = $this->labels ?: $GLOBALS['TL_LANG']['MSC']['dropzone']['labels'];
