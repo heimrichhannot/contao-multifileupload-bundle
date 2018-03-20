@@ -145,37 +145,37 @@ class FormMultiFileUpload extends Upload
                 $arrFiles = [$arrFiles];
             }
 
-            /** @var Collection|FilesModel $objFileModels */
-            $objFileModels = System::getContainer()->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
+            /** @var Collection|FilesModel $filesModel */
+            $filesModel = System::getContainer()->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
 
-            if (null === $objFileModels) {
+            if (null === $filesModel) {
                 continue;
             }
 
-            $arrPaths = $objFileModels->fetchEach('path');
+            $arrPaths = $filesModel->fetchEach('path');
             $arrTargets = [];
 
             // do not loop over $objFileModels as $objFile->close() will pull models away
             foreach ($arrPaths as $strPath) {
-                $objFile = new File($strPath);
-                $target = $strUploadFolder.'/'.$objFile->name;
+                $file = new File($strPath);
+                $target = $strUploadFolder.'/'.$file->name;
 
                 // upload_path_callback
-                if (is_array($arrData['upload_path_callback'])) {
+                if (isset($arrData['upload_path_callback']) && is_array($arrData['upload_path_callback'])) {
                     foreach ($arrData['upload_path_callback'] as $callback) {
-                        $target = System::importStatic($callback[0])->{$callback[1]}($target, $objFile, $dc) ?: $target;
+                        $target = System::importStatic($callback[0])->{$callback[1]}($target, $file, $dc) ?: $target;
                     }
                 }
 
-                if (System::getContainer()->get('huh.utils.string')->startsWith($objFile->path, ltrim($target, '/'))) {
+                if (System::getContainer()->get('huh.utils.string')->startsWith($file->path, ltrim($target, '/'))) {
                     continue;
                 }
 
                 $target = System::getContainer()->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
 
-                if ($objFile->renameTo($target)) {
+                if ($file->renameTo($target)) {
                     $arrTargets[] = $target;
-                    $objModel = $objFile->getModel();
+                    $objModel = $file->getModel();
 
                     // Update the database
                     if (null === $objModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($target)) {

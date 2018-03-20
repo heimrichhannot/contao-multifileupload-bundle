@@ -1310,26 +1310,24 @@ class UploadTest extends ContaoTestCase
         $filesAdapter->method('findMultipleByUuids')->willReturn($filesModel);
 
         $filesUtil = $this->mockAdapter(['getUniqueFileNameWithinTarget', 'getFolderFromDca']);
-        $filesUtil->method('getUniqueFileNameWithinTarget')->willReturn('files/uploads/dataMove.csv');
-        $filesUtil->method('getFolderFromDca')->willReturn('files/uploads');
+        $filesUtil->method('getUniqueFileNameWithinTarget')->willReturn('files/uploads/data.csv');
+        $filesUtil->method('getFolderFromDca')->willReturn('files');
 
         $container = System::getContainer();
         $container->set('contao.framework', $this->mockContaoFramework([FilesModel::class => $filesAdapter]));
         $container->set('huh.utils.file', $filesUtil);
         System::setContainer($container);
-
+        $activeRecord = new \stdClass();
+        $activeRecord->upload = serialize('files');
         $class = new FormMultiFileUpload($arrAttributes);
-        $class->moveFiles($this->getDataContainer());
+        $this->assertNull($class->moveFiles($this->getDataContainer($activeRecord)));
     }
 
     /**
      * @return DataContainer| \PHPUnit_Framework_MockObject_MockObject
      */
-    public function getDataContainer()
+    public function getDataContainer($activeRecord = null)
     {
-        $activeRecord = new \stdClass();
-        $activeRecord->upload = serialize('files');
-
         return $this->mockClassWithProperties(DataContainer::class, ['table' => 'tl_files', 'activeRecord' => $activeRecord, 'id' => 12]);
     }
 
