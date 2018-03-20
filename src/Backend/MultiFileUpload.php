@@ -9,6 +9,7 @@
 namespace HeimrichHannot\MultiFileUpload\Backend;
 
 use Contao\BackendUser;
+use Contao\Controller;
 use Contao\File;
 use Contao\FileUpload;
 use Contao\FrontendTemplate;
@@ -75,7 +76,7 @@ class MultiFileUpload extends FileUpload
                 die('No file access.');
             }
 
-            \Controller::sendFileToBrowser($file);
+            System::getContainer()->get('contao.framework')->getAdapter(Controller::class)->sendFileToBrowser($file);
         }
 
         global $objPage;

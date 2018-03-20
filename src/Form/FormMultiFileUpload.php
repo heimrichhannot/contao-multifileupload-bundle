@@ -382,7 +382,7 @@ class FormMultiFileUpload extends Upload
     /**
      * @param array $attributes
      */
-    public function isSingleFile(array $attributes)
+    protected function isSingleFile(array $attributes)
     {
         // no database field (e.g. multi_column_editor)
         if (!System::getContainer()->get('contao.framework')->createInstance(Database::class)->fieldExists($attributes['name'], $attributes['strTable']) && 'radio' === $attributes['fieldType']) {

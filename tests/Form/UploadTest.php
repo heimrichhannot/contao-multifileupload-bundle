@@ -9,6 +9,7 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Tests\Form;
 
 use Contao\BackendUser;
+use Contao\Controller;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Database;
 use Contao\DataContainer;
@@ -1442,6 +1443,49 @@ class UploadTest extends ContaoTestCase
         System::setContainer($container);
 
         $this->assertNull($class->deleteScheduledFiles(['files']));
+    }
+
+    public function testMultiFileUploadInstantiation()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => $this->getTempDir().'/files/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+
+        $class = new MultiFileUpload($arrAttributes);
+        $this->assertInstanceOf(MultiFileUpload::class, $class);
+
+        $controller = $this->mockAdapter(['sendFileToBrowser']);
+        $controller->method('sendFileToBrowser')->willThrowException(new \Exception('sendFileToBrowser'));
+
+        System::getContainer()->get('huh.request')->setGet('file', 'file');
+        System::getContainer()->get('session')->set('multifileupload_allowed_downloads', ['file']);
+        $container = System::getContainer();
+        $container->set('contao.framework', $this->mockContaoFramework([Controller::class => $controller]));
+        System::setContainer($container);
+
+        try {
+            $class = new MultiFileUpload($arrAttributes);
+        } catch (\Exception $exception) {
+            $this->assertSame('sendFileToBrowser', $exception->getMessage());
+        }
     }
 
     /**
