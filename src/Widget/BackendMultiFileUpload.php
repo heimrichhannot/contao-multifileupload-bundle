@@ -8,8 +8,10 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Widget;
 
+use Contao\BackendUser;
 use Contao\DataContainer;
 use Contao\System;
+use Contao\Widget;
 use HeimrichHannot\AjaxBundle\Response\Response;
 use HeimrichHannot\AjaxBundle\Response\ResponseError;
 use HeimrichHannot\MultiFileUpload\Backend\MultiFileUpload;
@@ -17,7 +19,7 @@ use HeimrichHannot\MultiFileUpload\Form\FormMultiFileUpload;
 
 class BackendMultiFileUpload extends FormMultiFileUpload
 {
-    protected static $uploadAction = 'multifileupload_upload';
+    protected $uploadAction = 'multifileupload_upload';
 
     public function __construct($attributes = null)
     {
@@ -26,14 +28,14 @@ class BackendMultiFileUpload extends FormMultiFileUpload
 
     public function executePostActionsHook($strAction, DataContainer $dc)
     {
-        if ($strAction !== static::$uploadAction) {
+        if ($strAction !== $this->uploadAction) {
             return false;
         }
 
-        $fields = \Session::getInstance()->get(MultiFileUpload::SESSION_FIELD_KEY);
+        $fields = System::getContainer()->get('session')->get(MultiFileUpload::SESSION_FIELD_KEY);
 
         // Check whether the field is allowed for regular users
-        if (!isset($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')]) || ($fields[$dc->table]['fields'][System::getContainer()->get('huh.request')->getPost('field')]['exclude'] && !\BackendUser::getInstance()->hasAccess($dc->table.'::'.System::getContainer()->get('huh.request')->getPost('field'), 'alexf'))) {
+        if (!isset($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')]) || (!isset($fields[$dc->table]['fields'][System::getContainer()->get('huh.request')->getPost('field')]['exclude']) && !BackendUser::getInstance()->hasAccess($dc->table.'::'.System::getContainer()->get('huh.request')->getPost('field'), 'alexf'))) {
             System::getContainer()->get('monolog.logger.contao')->log('Field "'.System::getContainer()->get('huh.request')->getPost('field').'" is not an allowed selector field (possible SQL injection attempt)', __METHOD__, TL_ERROR);
 
             $objResponse = new ResponseError();
@@ -46,7 +48,7 @@ class BackendMultiFileUpload extends FormMultiFileUpload
         }
 
         // add dca attributes and instantiate current object to set widget attributes
-        $arrAttributes = \Widget::getAttributesFromDca($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')], System::getContainer()->get('huh.request')->getPost('field'));
+        $arrAttributes = System::getContainer()->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')], System::getContainer()->get('huh.request')->getPost('field'));
         $objUploader = new static($arrAttributes);
         $objResponse = $objUploader->upload();
 

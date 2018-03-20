@@ -10,9 +10,11 @@ namespace HeimrichHannot\MultiFileUpload\Form;
 
 use Contao\CoreBundle\Command\SymlinksCommand;
 use Contao\Database;
+use Contao\DataContainer;
 use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
+use Contao\Folder;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Upload;
@@ -21,6 +23,7 @@ use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseError;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
 use HeimrichHannot\MultiFileUpload\Backend\MultiFileUpload;
+use Model\Collection;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -109,7 +112,7 @@ class FormMultiFileUpload extends Upload
         System::getContainer()->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
     }
 
-    public function moveFiles(\DataContainer $dc)
+    public function moveFiles(DataContainer $dc)
     {
         $arrPost = System::getContainer()->get('huh.request')->getAllPost();
 
@@ -132,6 +135,7 @@ class FormMultiFileUpload extends Upload
                 $arrFiles = [$arrFiles];
             }
 
+            /** @var Collection|FilesModel $objFileModels */
             $objFileModels = System::getContainer()->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
 
             if (null === $objFileModels) {
@@ -202,7 +206,7 @@ class FormMultiFileUpload extends Upload
             return;
         }
 
-        $objTmpFolder = new \Folder(MultiFileUpload::UPLOAD_TMP);
+        $objTmpFolder = new Folder(MultiFileUpload::UPLOAD_TMP);
 
         // tmp directory is not public, mandatory for preview images
         if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.MultiFileUpload::UPLOAD_TMP)) {
@@ -319,7 +323,7 @@ class FormMultiFileUpload extends Upload
                 $arrFiles[$k] = \StringUtil::uuidToBin($v);
             }
         } else {
-            if (!\Validator::isUuid($arrFiles)) {
+            if (!Validator::isUuid($arrFiles)) {
                 $this->addError($GLOBALS['TL_LANG']['ERR']['invalidUuid']);
 
                 return false;
@@ -463,14 +467,12 @@ class FormMultiFileUpload extends Upload
      */
     protected function validateUpload(File $objFile)
     {
-        $error = false;
-
         if ($objFile->isImage) {
-            $minWidth = \Image::getPixelValue($this->minImageWidth);
-            $minHeight = \Image::getPixelValue($this->minImageHeight);
+            $minWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageWidth);
+            $minHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageHeight);
 
-            $maxWidth = \Image::getPixelValue($this->maxImageWidth);
-            $maxHeight = \Image::getPixelValue($this->maxImageHeight);
+            $maxWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageWidth);
+            $maxHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageHeight);
 
             if ($minWidth > 0 && $objFile->width < $minWidth) {
                 return sprintf($this->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $objFile->width);
@@ -489,7 +491,7 @@ class FormMultiFileUpload extends Upload
             }
         }
 
-        return $error;
+        return false;
     }
 
     /**
