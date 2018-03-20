@@ -1323,6 +1323,127 @@ class UploadTest extends ContaoTestCase
         $this->assertNull($class->moveFiles($this->getDataContainer($activeRecord)));
     }
 
+    public function testGenerateLabel()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new FormMultiFileUpload($arrAttributes);
+        $this->assertSame('<label class="">label</label>', $class->generateLabel());
+
+        $class = new FormMultiFileUpload();
+        $this->assertSame('', $class->generateLabel());
+    }
+
+    public function testValidator()
+    {
+        $GLOBALS['TL_LANG']['ERR']['invalidUuid'] = 'Der Datei wurde kein eindeutiger Kennzeichner (uuid) zugewiesen, bitte versuchen Sie die Datei erneut hochzuladen.';
+
+        $fileUtils = $this->mockAdapter(['getFileFromUuid']);
+        $fileUtils->method('getFileFromUuid')->willReturn(null);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.file', $fileUtils);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new FormMultiFileUpload($arrAttributes);
+        $class->useRawRequestData = true;
+        $this->assertSame([], $class->validator(''));
+        $this->assertFalse($class->validator(json_encode(['/files/data.csv'])));
+        $this->assertFalse($class->validator(json_encode('/files/data.csv')));
+        $this->assertFalse($class->validator(json_encode('dfd1cc5e-2c49-11e8-b467-0ed5f89f718b')));
+        $this->assertSame([], $class->validator(json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b'])));
+
+        $file = $this->mockClassWithProperties(File::class, []);
+        $file->method('exists')->willReturn(true);
+
+        $fileUtils = $this->mockAdapter(['getFileFromUuid']);
+        $fileUtils->method('getFileFromUuid')->willReturn($file);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.file', $fileUtils);
+        System::setContainer($container);
+
+        $this->assertSame(\Contao\StringUtil::uuidToBin('dfd1cc5e-2c49-11e8-b467-0ed5f89f718b'), $class->validator(json_encode('dfd1cc5e-2c49-11e8-b467-0ed5f89f718b')));
+        $this->assertSame([\Contao\StringUtil::uuidToBin('dfd1cc5e-2c49-11e8-b467-0ed5f89f718b')], $class->validator(json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b'])));
+
+        $GLOBALS['TL_LANG']['ERR']['mdtryNoLabel'] = 'error';
+        $GLOBALS['TL_LANG']['ERR']['mandatory'] = 'error';
+        $class->mandatory = true;
+        $requestStack = System::getContainer()->get('request_stack')->getCurrentRequest();
+        $requestStack->request->set('deleted_files', json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b']));
+        $requestStack->request->set('deleted_', json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b']));
+        $this->assertFalse($class->validator(json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b'])));
+
+        $class = new FormMultiFileUpload();
+        $class->useRawRequestData = true;
+        $class->mandatory = true;
+        $this->assertFalse($class->validator(json_encode(['dfd1cc5e-2c49-11e8-b467-0ed5f89f718b'])));
+    }
+
+    public function testGetUploader()
+    {
+        $class = new FormMultiFileUpload();
+        $this->assertInstanceOf(MultiFileUpload::class, $class->getUploader());
+    }
+
+    public function testDeleteScheduledFiles()
+    {
+        $class = new FormMultiFileUpload();
+        $this->assertSame([], $class->deleteScheduledFiles([]));
+
+        $file = $this->createMock(File::class);
+        $file->method('delete')->willReturn(true);
+        $file->method('exists')->willReturn(true);
+        $fileUtils = $this->mockAdapter(['getFileFromUuid']);
+        $fileUtils->method('getFileFromUuid')->willReturn($file);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.file', $fileUtils);
+        System::setContainer($container);
+
+        $this->assertNull($class->deleteScheduledFiles(['files']));
+    }
+
     /**
      * @return DataContainer| \PHPUnit_Framework_MockObject_MockObject
      */

@@ -275,7 +275,7 @@ class FormMultiFileUpload extends Upload
 
     public function generateLabel()
     {
-        if ('' === $this->strLabel) {
+        if ('' === $this->strLabel || null === $this->strLabel) {
             return '';
         }
 
@@ -283,26 +283,25 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @param mixed $varInput
+     * @param mixed $input
      *
      * @return array|bool|mixed|string
      */
-    public function validator($varInput)
+    public function validator($input)
     {
-        if ('' === $varInput || '[]' === $varInput) {
-            $varInput = '[]';
+        if ('' === $input || '[]' === $input) {
+            $input = '[]';
         }
 
-        $arrFiles = json_decode($varInput);
+        $arrFiles = json_decode($input);
         $arrDeleted = json_decode(($this->getPost('deleted_'.$this->strName)));
         $blnEmpty = false;
 
         if (is_array($arrFiles) && is_array($arrDeleted)) {
             $blnEmpty = empty(array_diff($arrFiles, $arrDeleted));
         }
-
         if ($this->mandatory && $blnEmpty) {
-            if ('' === $this->strLabel) {
+            if ('' === $this->strLabel || null === $this->strLabel) {
                 $this->addError($GLOBALS['TL_LANG']['ERR']['mdtryNoLabel']);
             } else {
                 $this->addError(sprintf($GLOBALS['TL_LANG']['ERR']['mandatory'], $this->strLabel));
@@ -312,7 +311,7 @@ class FormMultiFileUpload extends Upload
             return false;
         }
 
-        if (!$this->skipDeleteAfterSubmit) {
+        if (!$this->skipDeleteAfterSubmit && is_array($arrDeleted)) {
             $this->deleteScheduledFiles($arrDeleted);
         }
 
@@ -325,7 +324,7 @@ class FormMultiFileUpload extends Upload
                 }
 
                 // cleanup non existing files on save
-                if (null === ($objFile = System::getContainer()->get('huh.utils.file')->getFileFromUuid($v)) || !$objFile->exists()) {
+                if (null === ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($v)) || !$file->exists()) {
                     unset($arrFiles[$k]);
                     continue;
                 }
@@ -340,7 +339,7 @@ class FormMultiFileUpload extends Upload
             }
 
             // cleanup non existing files on save
-            if (null === ($objFile = System::getContainer()->get('huh.utils.file')->getFileFromUuid($arrFiles)) || !$objFile->exists()) {
+            if (null === ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($arrFiles)) || !$file->exists()) {
                 return false;
             }
 
@@ -350,39 +349,33 @@ class FormMultiFileUpload extends Upload
         return $this->singleFile ? reset($arrFiles) : $arrFiles;
     }
 
+    /**
+     * @return MultiFileUpload
+     */
     public function getUploader()
     {
         return $this->objUploader;
     }
 
-    public function deleteScheduledFiles($arrScheduledFiles)
+    /**
+     * @param array $scheduledFiles
+     *
+     * @return array
+     */
+    public function deleteScheduledFiles(array $scheduledFiles)
     {
         $arrFiles = [];
 
-        if (empty($arrScheduledFiles)) {
+        if (empty($scheduledFiles)) {
             return $arrFiles;
         }
 
-        foreach ($arrScheduledFiles as $strUuid) {
+        foreach ($scheduledFiles as $strUuid) {
             if (null !== ($objFile = System::getContainer()->get('huh.utils.file')->getFileFromUuid($strUuid)) && $objFile->exists()) {
                 if (true === $objFile->delete()) {
                     $arrFiles[] = $strUuid;
                 }
             }
-        }
-    }
-
-    /**
-     * @param array $attributes
-     */
-    public function setAttributes(array $attributes)
-    {
-        if (null !== $this->objUploader && is_array($this->objUploader->getData())) {
-            $attributes = array_merge($attributes, $this->objUploader->getData());
-        }
-
-        foreach ($attributes as $strKey => $varValue) {
-            $this->{$strKey} = $varValue;
         }
     }
 
@@ -404,6 +397,20 @@ class FormMultiFileUpload extends Upload
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * @param array $attributes
+     */
+    protected function setAttributes(array $attributes)
+    {
+        if (null !== $this->objUploader && is_array($this->objUploader->getData())) {
+            $attributes = array_merge($attributes, $this->objUploader->getData());
+        }
+
+        foreach ($attributes as $strKey => $varValue) {
+            $this->{$strKey} = $varValue;
         }
     }
 
