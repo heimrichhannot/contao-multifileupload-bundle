@@ -49,7 +49,7 @@ class BackendMultiFileUpload extends FormMultiFileUpload
 
         // add dca attributes and instantiate current object to set widget attributes
         $arrAttributes = System::getContainer()->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')], System::getContainer()->get('huh.request')->getPost('field'));
-        $objUploader = new static($arrAttributes);
+        $objUploader = new self($arrAttributes);
         $objResponse = $objUploader->upload();
 
         /* @var Response */

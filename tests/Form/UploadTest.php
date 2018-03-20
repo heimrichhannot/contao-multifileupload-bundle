@@ -1194,6 +1194,70 @@ class UploadTest extends ContaoTestCase
             $message = json_decode($exception->getMessage());
             $this->assertSame(200, $message->statusCode);
         }
+
+        System::getContainer()->get('huh.request')->files->remove('files');
+
+        $this->assertNull($class->executePostActionsHook('multifileupload_upload', $this->getDataContainer()));
+    }
+
+    public function testInstantiate()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $value = json_encode('value');
+        $arrAttributes['value'] = $value;
+        unset($arrAttributes['strTable']);
+        $class = new FormMultiFileUpload($arrAttributes);
+        $this->assertInstanceOf(FormMultiFileUpload::class, $class);
+
+        $arrAttributes['value'] = [$value];
+        $class = new FormMultiFileUpload($arrAttributes);
+        $this->assertInstanceOf(FormMultiFileUpload::class, $class);
+
+        $GLOBALS['TL_LANG']['ERR']['noUploadFolderDeclared'] = 'Kein "uploadFolder" für das Feld "%s" in eval angegeben.';
+        try {
+            $class = new FormMultiFileUpload([]);
+        } catch (\Exception $e) {
+            $this->assertSame('Kein "uploadFolder" für das Feld "" in eval angegeben.', $e->getMessage());
+        }
+
+        $containerUtils = $this->mockAdapter(['isFrontend']);
+        $containerUtils->method('isFrontend')->willReturn(true);
+
+        $ajaxAdapter = $this->mockAdapter(['runActiveAction']);
+        $requestAdapter = $this->mockAdapter(['getGet']);
+        $requestAdapter->method('getGet')->willReturn('');
+
+        $container = $this->mockContainer();
+        $container->set('huh.utils.container', $containerUtils);
+        $container->set('huh.ajax.action', new AjaxActionManager());
+        $container->set('huh.ajax', $ajaxAdapter);
+        $container->set('huh.request', $requestAdapter);
+        $container->set('huh.ajax.token', new AjaxTokenManager());
+        $container->set('session', new Session(new MockArraySessionStorage()));
+        System::setContainer($container);
+
+        $class = new FormMultiFileUpload();
+        $this->assertInstanceOf(FormMultiFileUpload::class, $class);
     }
 
     /**
