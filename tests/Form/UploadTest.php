@@ -1260,12 +1260,77 @@ class UploadTest extends ContaoTestCase
         $this->assertInstanceOf(FormMultiFileUpload::class, $class);
     }
 
+    public function testMoveFiles()
+    {
+        System::getContainer()->get('huh.request')->setPost('title', []);
+        System::getContainer()->get('huh.request')->setPost('upload', []);
+
+        $GLOBALS['TL_DCA']['tl_files']['fields'] = [
+            'title' => [
+                'inputType' => 'text',
+            ],
+            'upload' => [
+                'inputType' => 'multifileupload',
+                'upload_path_callback' => [],
+                'eval' => [
+                    'uploadFolder' => $this->getTempDir().'/files/uploads',
+                ],
+            ],
+        ];
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $value = json_encode('value');
+        $arrAttributes['value'] = $value;
+        unset($arrAttributes['strTable']);
+
+        $filesModel = $this->mockClassWithProperties(\Contao\Model\Collection::class, []);
+        $filesModel->method('fetchEach')->willReturn(['files/data.csv']);
+
+        $filesAdapter = $this->mockAdapter(['findMultipleByUuids']);
+        $filesAdapter->method('findMultipleByUuids')->willReturn($filesModel);
+
+        $filesUtil = $this->mockAdapter(['getUniqueFileNameWithinTarget', 'getFolderFromDca']);
+        $filesUtil->method('getUniqueFileNameWithinTarget')->willReturn('files/uploads/dataMove.csv');
+        $filesUtil->method('getFolderFromDca')->willReturn('files/uploads');
+
+        $container = System::getContainer();
+        $container->set('contao.framework', $this->mockContaoFramework([FilesModel::class => $filesAdapter]));
+        $container->set('huh.utils.file', $filesUtil);
+        System::setContainer($container);
+
+        $class = new FormMultiFileUpload($arrAttributes);
+        $class->moveFiles($this->getDataContainer());
+    }
+
     /**
      * @return DataContainer| \PHPUnit_Framework_MockObject_MockObject
      */
     public function getDataContainer()
     {
-        return $this->mockClassWithProperties(DataContainer::class, ['table' => 'tl_files', 'activeRecord' => null, 'id' => 12]);
+        $activeRecord = new \stdClass();
+        $activeRecord->upload = serialize('files');
+
+        return $this->mockClassWithProperties(DataContainer::class, ['table' => 'tl_files', 'activeRecord' => $activeRecord, 'id' => 12]);
     }
 
     /**

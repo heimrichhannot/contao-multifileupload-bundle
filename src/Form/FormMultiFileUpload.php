@@ -113,11 +113,20 @@ class FormMultiFileUpload extends Upload
         System::getContainer()->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
     }
 
+    /**
+     * @param DataContainer $dc
+     *
+     * @throws \Exception
+     */
     public function moveFiles(DataContainer $dc)
     {
         $arrPost = System::getContainer()->get('huh.request')->getAllPost();
 
         foreach ($arrPost as $key => $value) {
+            if (!isset($GLOBALS['TL_DCA'][$dc->table]['fields'][$key])) {
+                continue;
+            }
+
             $arrData = $GLOBALS['TL_DCA'][$dc->table]['fields'][$key];
 
             if (MultiFileUpload::NAME !== $arrData['inputType']) {
@@ -149,28 +158,28 @@ class FormMultiFileUpload extends Upload
             // do not loop over $objFileModels as $objFile->close() will pull models away
             foreach ($arrPaths as $strPath) {
                 $objFile = new File($strPath);
-                $strTarget = $strTarget = $strUploadFolder.'/'.$objFile->name;
+                $target = $strUploadFolder.'/'.$objFile->name;
 
                 // upload_path_callback
                 if (is_array($arrData['upload_path_callback'])) {
                     foreach ($arrData['upload_path_callback'] as $callback) {
-                        $strTarget = System::importStatic($callback[0])->{$callback[1]}($strTarget, $objFile, $dc) ?: $strTarget;
+                        $target = System::importStatic($callback[0])->{$callback[1]}($target, $objFile, $dc) ?: $target;
                     }
                 }
 
-                if (System::getContainer()->get('huh.utils.string')->startsWith($objFile->path, ltrim($strTarget, '/'))) {
+                if (System::getContainer()->get('huh.utils.string')->startsWith($objFile->path, ltrim($target, '/'))) {
                     continue;
                 }
 
-                $strTarget = System::getContainer()->get('huh.utils.file')->getUniqueFileNameWithinTarget($strTarget, static::UNIQID_PREFIX);
+                $target = System::getContainer()->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
 
-                if ($objFile->renameTo($strTarget)) {
-                    $arrTargets[] = $strTarget;
+                if ($objFile->renameTo($target)) {
+                    $arrTargets[] = $target;
                     $objModel = $objFile->getModel();
 
                     // Update the database
-                    if (null === $objModel && Dbafs::shouldBeSynchronized($strTarget)) {
-                        $objModel = Dbafs::addResource($strTarget);
+                    if (null === $objModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($target)) {
+                        $objModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($target);
                     }
 
                     continue;
@@ -183,7 +192,7 @@ class FormMultiFileUpload extends Upload
             if (isset($GLOBALS['TL_HOOKS']['postUpload']) && is_array($GLOBALS['TL_HOOKS']['postUpload'])) {
                 foreach ($GLOBALS['TL_HOOKS']['postUpload'] as $callback) {
                     if (is_array($callback)) {
-                        \System::importStatic($callback[0])->{$callback[1]}($arrTargets);
+                        System::importStatic($callback[0])->{$callback[1]}($arrTargets);
                     } elseif (is_callable($callback)) {
                         $callback($arrTargets);
                     }
@@ -321,7 +330,7 @@ class FormMultiFileUpload extends Upload
                     continue;
                 }
 
-                $arrFiles[$k] = \StringUtil::uuidToBin($v);
+                $arrFiles[$k] = StringUtil::uuidToBin($v);
             }
         } else {
             if (!Validator::isUuid($arrFiles)) {
@@ -557,8 +566,8 @@ class FormMultiFileUpload extends Upload
             $objModel = $objFile->getModel();
 
             // Update the database
-            if (null === $objModel && Dbafs::shouldBeSynchronized($strRelativePath)) {
-                $objModel = Dbafs::addResource($strRelativePath);
+            if (null === $objModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($strRelativePath)) {
+                $objModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($strRelativePath);
             }
 
             $strUuid = $objModel->uuid;
