@@ -9,6 +9,7 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Backend;
 
 use Contao\BackendUser;
+use Contao\Config;
 use Contao\Controller;
 use Contao\File;
 use Contao\FileUpload;
@@ -335,7 +336,7 @@ class MultiFileUpload extends FileUpload
 
         // throw maximum upload size exceptions only in back end for admins/developer
         if (null !== $strError) {
-            if (System::getContainer()->get('huh.utils.container')->isBackend() && BackendUser::getInstance()->isAdmin) {
+            if (System::getContainer()->get('huh.utils.container')->isBackend() && System::getContainer()->get('contao.framework')->createInstance(BackendUser::class)->isAdmin) {
                 throw new \Exception($strError);
             }
             System::getContainer()->get('monolog.logger.contao')->log($strError, __METHOD__, TL_ERROR);
@@ -359,7 +360,7 @@ class MultiFileUpload extends FileUpload
 
         $this->acceptedFiles = implode(',', array_map(function ($a) {
             return '.'.$a;
-        }, StringUtil::trimsplit(',', strtolower($this->extensions ?: \Config::get('uploadTypes')))));
+        }, StringUtil::trimsplit(',', strtolower($this->extensions ?: Config::get('uploadTypes')))));
 
         // labels & messages
         $this->labels = $this->labels ?: $GLOBALS['TL_LANG']['MSC']['dropzone']['labels'];
@@ -378,7 +379,7 @@ class MultiFileUpload extends FileUpload
 
         $this->createImageThumbnails = $this->createImageThumbnails ?: true;
 
-        $this->requestToken = System::getContainer()->get('contao.csrf.token_manager')->getToken(System::getContainer()->getParameter('contao.csrf_token_name'))->getValue();
+        $this->requestToken = System::getContainer()->get('security.csrf.token_manager')->getToken(System::getContainer()->getParameter('contao.csrf_token_name'))->getValue();
 
         $this->previewsContainer = '#ctrl_'.$this->id.' .dropzone-previews';
 
@@ -469,27 +470,21 @@ class MultiFileUpload extends FileUpload
     protected function getInfoAction(File $file)
     {
         $strUrl = null;
-        $strFileNameEncoded = StringUtil::convertEncoding($file->name, \Config::get('characterSet'));
+        $strFileNameEncoded = StringUtil::convertEncoding($file->name, Config::get('characterSet'));
+        $containerUtils = System::getContainer()->get('huh.utils.container');
 
-        switch (TL_MODE) {
-            case 'FE':
-                $strHref = System::getContainer()->get('huh.ajax.action')->removeAjaxParametersFromUrl(\Environment::get('uri'));
-                $strHref .= ((\Config::get('disableAlias') || false !== strpos($strHref, '?')) ? '&' : '?').'file='.System::urlEncode($file->value);
+        if ($containerUtils->isFrontend()) {
+            $strHref = System::getContainer()->get('huh.ajax.action')->removeAjaxParametersFromUrl(\Environment::get('uri'));
+            $strHref .= ((Config::get('disableAlias') || false !== strpos($strHref, '?')) ? '&' : '?').'file='.System::urlEncode($file->value);
 
-                return 'window.open("'.$strHref.'", "_blank");';
-                break;
-            case 'BE':
-                $popupWidth = 664;
-                $popupHeight = 299;
+            return 'window.open("'.$strHref.'", "_blank");';
+        } elseif ($containerUtils->isBackend()) {
+            $popupWidth = 664;
+            $popupHeight = 299;
 
-                $href = version_compare(VERSION, '4.0', '<=')
-                    ? 'contao/popup.php?src='.base64_encode($file->value)
-                    : System::getContainer()->get('router')->generate('contao_backend_popup', [
-                        'src' => base64_encode($file->value),
-                    ]);
+            $href = System::getContainer()->get('router')->generate('contao_backend_popup', ['src' => base64_encode($file->value)]);
 
-                return 'Backend.openModalIframe({"width":"'.$popupWidth.'","title":"'.str_replace("'", "\\'", StringUtil::specialchars($strFileNameEncoded, false, true)).'","url":"'.$href.'","height":"'.$popupHeight.'"});return false';
-                break;
+            return 'Backend.openModalIframe({"width":"'.$popupWidth.'","title":"'.str_replace("'", "\\'", StringUtil::specialchars($strFileNameEncoded, false, true)).'","url":"'.$href.'","height":"'.$popupHeight.'"});';
         }
 
         return $strUrl;

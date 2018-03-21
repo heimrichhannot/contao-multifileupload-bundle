@@ -39,6 +39,7 @@ use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\Routing\Router;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
 class UploadTest extends ContaoTestCase
@@ -168,6 +169,7 @@ class UploadTest extends ContaoTestCase
         $container->set('huh.utils.url', new UrlUtil($this->mockContaoFramework()));
         $container->set('request_stack', $this->requestStack);
         $container->set('contao.csrf.token_manager', $tokenManager);
+        $container->set('security.csrf.token_manager', $tokenManager);
         $container->set('contao.framework', $framework);
         $container->set('session', new Session(new MockArraySessionStorage()));
         $container->set('database_connection', $this->mockClassWithProperties(Database::class, []));
@@ -1661,6 +1663,123 @@ class UploadTest extends ContaoTestCase
 ";
 
         $this->assertSame($template, $class->generateMarkup());
+    }
+
+    public function testGetDropZoneOptions()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => ['uploadFolder' => $this->getTempDir().'/files/uploads/', 'extensions' => 'csv', 'fieldType' => 'radio', 'submitOnChange' => false, 'onchange' => '', 'allowHtml' => false, 'rte' => '', 'preserveTags' => '', 'sql' => 'varchar(255)', 'encrypt' => false, 'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot']],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $backendMultiFileUpload = new BackendMultiFileUpload($arrAttributes);
+        $arrAttributes['dictMaxFilesExceeded'] = true;
+
+        $class = new MultiFileUpload($arrAttributes, $backendMultiFileUpload);
+        $function = $this->getMethod(MultiFileUpload::class, 'getDropZoneOptions');
+        $result = $function->invokeArgs($class, []);
+        $this->assertSame([
+            'data-onchange' => 'this.form.submit()',
+            'data-param-name' => 'files',
+            'data-dict-max-files-exceeded' => true,
+            'data-max-filesize' => 1.95,
+            'data-accepted-files' => '.csv',
+            'data-thumbnail-width' => 90,
+            'data-thumbnail-height' => 90,
+            'data-create-image-thumbnails' => 'true',
+            'data-request-token' => 'token',
+            'data-previews-container' => '#ctrl_files .dropzone-previews',
+            'data-upload-multiple' => false,
+            'data-max-files' => 1,
+        ], $result);
+
+        $array = ['dictMaxFilesExceeded'];
+        foreach ($array as $item) {
+            $this->assertTrue($class->getDropZoneOption($item));
+        }
+    }
+
+    public function testGetMaximumUploadSize()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => ['uploadFolder' => $this->getTempDir().'/files/uploads/', 'extensions' => 'csv', 'fieldType' => 'radio', 'submitOnChange' => false, 'onchange' => '', 'allowHtml' => false, 'rte' => '', 'preserveTags' => '', 'sql' => 'varchar(255)', 'encrypt' => false, 'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot']],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new MultiFileUpload($arrAttributes);
+        $function = $this->getMethod(MultiFileUpload::class, 'getMaximumUploadSize');
+        $result = $function->invokeArgs($class, []);
+        $this->assertSame(2048000, $result);
+    }
+
+    public function testGetInfoAction()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => ['uploadFolder' => $this->getTempDir().'/files/uploads/', 'extensions' => 'csv', 'fieldType' => 'radio', 'submitOnChange' => false, 'onchange' => '', 'allowHtml' => false, 'rte' => '', 'preserveTags' => '', 'sql' => 'varchar(255)', 'encrypt' => false, 'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot']],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new MultiFileUpload($arrAttributes);
+        $file = $this->mockClassWithProperties(File::class, ['value' => 'value']);
+
+        $containerUtils = $this->mockAdapter(['isFrontend', 'isBackend']);
+        $containerUtils->method('isFrontend')->willReturn(null);
+        $containerUtils->method('isBackend')->willReturn(null);
+
+        $ajaxAction = $this->mockAdapter(['removeAjaxParametersFromUrl']);
+        $ajaxAction->method('removeAjaxParametersFromUrl')->willReturn('href');
+
+        $router = $this->mockAdapter(['generate']);
+        $router->method('generate')->willReturn('href');
+
+        $container = System::getContainer();
+        $container->set('huh.utils.container', $containerUtils);
+        $container->set('huh.ajax.action', $ajaxAction);
+        $container->set('router', $router);
+        System::setContainer($container);
+
+        $function = $this->getMethod(MultiFileUpload::class, 'getInfoAction');
+        $result = $function->invokeArgs($class, [$file]);
+        $this->assertNull($result);
+
+        $containerUtils = $this->mockAdapter(['isFrontend', 'isBackend']);
+        $containerUtils->method('isFrontend')->willReturn(true);
+        $containerUtils->method('isBackend')->willReturn(null);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.container', $containerUtils);
+        System::setContainer($container);
+
+        $function = $this->getMethod(MultiFileUpload::class, 'getInfoAction');
+        $result = $function->invokeArgs($class, [$file]);
+        $this->assertSame('window.open("href?file=value", "_blank");', $result);
+
+        $containerUtils = $this->mockAdapter(['isFrontend', 'isBackend']);
+        $containerUtils->method('isFrontend')->willReturn(false);
+        $containerUtils->method('isBackend')->willReturn(true);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.container', $containerUtils);
+        System::setContainer($container);
+
+        $function = $this->getMethod(MultiFileUpload::class, 'getInfoAction');
+        $result = $function->invokeArgs($class, [$file]);
+        $this->assertSame('Backend.openModalIframe({"width":"664","title":"","url":"href","height":"299"});', $result);
     }
 
     /**
