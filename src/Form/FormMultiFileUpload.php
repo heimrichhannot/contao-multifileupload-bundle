@@ -202,6 +202,9 @@ class FormMultiFileUpload extends Upload
         }
     }
 
+    /**
+     * @return ResponseError|ResponseSuccess
+     */
     public function upload()
     {
         $arrUuids = [];
@@ -214,7 +217,9 @@ class FormMultiFileUpload extends Upload
         }
 
         if (!System::getContainer()->get('huh.request')->files->has($this->name)) {
-            return;
+            $objResponse = new ResponseError();
+            $objResponse->setMessage('Invalid Request. File not found in \Symfony\Component\HttpFoundation\FileBag');
+            $objResponse->output();
         }
 
         $objTmpFolder = new Folder(System::getContainer()->getParameter('huh.multifileupload.uploadtmp'));
@@ -253,9 +258,6 @@ class FormMultiFileUpload extends Upload
             }
         } else {
             // Single-file upload
-            /**
-             * @var UploadedFile
-             */
             $varReturn = $this->uploadFile($varFile, $objTmpFolder->path);
 
             if (isset($varReturn['uuid']) && Validator::isUuid($varReturn['uuid'])) {
@@ -523,90 +525,58 @@ class FormMultiFileUpload extends Upload
      */
     protected function uploadFile(UploadedFile $uploadFile, string $uploadFolder)
     {
-        $strOriginalFileName = rawurldecode($uploadFile->getClientOriginalName()); // e.g. double quotes are escaped with %22 -> decode it
-        $strOriginalFileNameEncoded = rawurlencode($strOriginalFileName);
-        $strSanitizedFileName = System::getContainer()->get('huh.utils.file')->sanitizeFileName($uploadFile->getClientOriginalName());
+        $originalFileName = rawurldecode($uploadFile->getClientOriginalName()); // e.g. double quotes are escaped with %22 -> decode it
+        $originalFileNameEncoded = rawurlencode($originalFileName);
+        $sanitizeFileName = System::getContainer()->get('huh.utils.file')->sanitizeFileName($uploadFile->getClientOriginalName());
 
         if ($uploadFile->getError()) {
-            return [
-                'error' => $uploadFile->getError(),
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+            return $this->prepareErrorArray($uploadFile->getError(), $originalFileNameEncoded, $sanitizeFileName);
         }
 
         $error = false;
-
-        $strTargetFileName = System::getContainer()->get('huh.utils.file')->addUniqueIdToFilename($strSanitizedFileName, static::UNIQID_PREFIX);
-
         if (false !== ($error = $this->validateExtension($uploadFile))) {
-            return [
-                'error' => $error,
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+            return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
+        $targetFileName = System::getContainer()->get('huh.utils.file')->addUniqueIdToFilename($sanitizeFileName, static::UNIQID_PREFIX);
         try {
-            $uploadFile = $uploadFile->move(TL_ROOT.'/'.$uploadFolder, $strTargetFileName);
+            $uploadFile = $uploadFile->move(TL_ROOT.'/'.$uploadFolder, $targetFileName);
         } catch (FileException $e) {
-            return [
-                'error' => sprintf($GLOBALS['TL_LANG']['ERR']['moveUploadFile'], $e->getMessage()),
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+            return $this->prepareErrorArray(sprintf($GLOBALS['TL_LANG']['ERR']['moveUploadFile'], $e->getMessage()), $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        $arrData = [
-            'filename' => $strTargetFileName,
-            'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-            'filenameSanitized' => $strSanitizedFileName,
-        ];
+        $relativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getRealPath()), DIRECTORY_SEPARATOR);
 
-        $strRelativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getRealPath()), DIRECTORY_SEPARATOR);
-
-        $objFile = null;
-        $objModel = null;
+        $file = null;
+        $fileModel = null;
 
         try {
             // add db record
-            $objFile = System::getContainer()->get('contao.framework')->createInstance(File::class, [$strRelativePath]);
-            $objModel = $objFile->getModel();
+            $file = System::getContainer()->get('contao.framework')->createInstance(File::class, [$relativePath]);
+            $fileModel = $file->getModel();
 
             // Update the database
-            if (null === $objModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($strRelativePath)) {
-                $objModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($strRelativePath);
+            if (null === $fileModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($relativePath)) {
+                $fileModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($relativePath);
             }
 
-            $strUuid = $objModel->uuid;
+            $strUuid = $fileModel->uuid;
         } catch (\InvalidArgumentException $e) {
             // remove file from file system
-            @unlink(TL_ROOT.'/'.$strRelativePath);
+            @unlink(TL_ROOT.'/'.$relativePath);
 
-            return [
-                'error' => $GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'],
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+            return $this->prepareErrorArray($GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'], $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        if (!$objFile instanceof File || null === $objModel) {
+        if (!$file instanceof File || null === $fileModel) {
             // remove file from file system
-            @unlink(TL_ROOT.'/'.$strRelativePath);
+            @unlink(TL_ROOT.'/'.$relativePath);
 
-            return [
-                'error' => $GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'],
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+            return $this->prepareErrorArray($GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'], $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        if (false !== ($error = $this->validateUpload($objFile))) {
-            return [
-                'error' => $error,
-                'filenameOrigEncoded' => $strOriginalFileNameEncoded,
-                'filenameSanitized' => $strSanitizedFileName,
-            ];
+        if (false !== ($error = $this->validateUpload($file))) {
+            return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
         // upload_path_callback
@@ -622,12 +592,18 @@ class FormMultiFileUpload extends Upload
                     continue;
                 }
 
-                if ($errorCallback = $objCallback->{$callback[1]}($objFile, $this)) {
+                if ($errorCallback = $objCallback->{$callback[1]}($file, $this)) {
                     $error = $errorCallback;
                     break; // stop validation on first error
                 }
             }
         }
+
+        $arrData = [
+            'filename' => $targetFileName,
+            'filenameOrigEncoded' => $originalFileNameEncoded,
+            'filenameSanitized' => $sanitizeFileName,
+        ];
 
         if (false === $error && false !== ($arrInfo = $this->objUploader->prepareFile($strUuid))) {
             $arrData = array_merge($arrData, $arrInfo);
@@ -638,10 +614,26 @@ class FormMultiFileUpload extends Upload
         $arrData['error'] = $error;
 
         // remove invalid files from tmp folder
-        if ($objFile instanceof File) {
-            $objFile->delete();
+        if ($file instanceof File) {
+            $file->delete();
         }
 
         return $arrData;
+    }
+
+    /**
+     * @param string $error
+     * @param string $originalFileNameEncoded
+     * @param string $sanitizeFileName
+     *
+     * @return array
+     */
+    protected function prepareErrorArray(string $error, string $originalFileNameEncoded, string $sanitizeFileName)
+    {
+        return [
+            'error' => $error,
+            'filenameOrigEncoded' => $originalFileNameEncoded,
+            'filenameSanitized' => $sanitizeFileName,
+        ];
     }
 }

@@ -68,7 +68,7 @@ class UploadTest extends ContaoTestCase
     {
         global $objPage;
 
-        $objPage = $this->mockClassWithProperties(PageModel::class, ['outputFormat' => 'no']);
+        $objPage = $this->mockClassWithProperties(PageModel::class, ['outputFormat' => 'html5']);
 
         parent::setUp();
 
@@ -1200,8 +1200,12 @@ class UploadTest extends ContaoTestCase
         }
 
         System::getContainer()->get('huh.request')->files->remove('files');
-
-        $this->assertNull($class->executePostActionsHook('multifileupload_upload', $this->getDataContainer()));
+        try {
+            $this->assertNull($class->executePostActionsHook('multifileupload_upload', $this->getDataContainer()));
+        } catch (AjaxExitException $exception) {
+            $message = json_decode($exception->getMessage());
+            $this->assertSame('Invalid Request. File not found in \Symfony\Component\HttpFoundation\FileBag', $message->message);
+        }
     }
 
     public function testInstantiate()
@@ -1586,6 +1590,77 @@ class UploadTest extends ContaoTestCase
 
         $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 5, 'height' => 6]);
         $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht überschreiten (aktuelle Bildhöhe: 6 Pixel).', $function->invokeArgs($class, [$file]));
+    }
+
+    public function testGenerateMarkup()
+    {
+        $file = $this->mockAdapter(['getPathname']);
+        $file->method('getPathname')->willReturn(__DIR__.'/../../src/Resources/contao/templates/forms/form_multifileupload_dropzone.html5');
+
+        $resourceFinder = $this->mockAdapter(['findIn', 'name']);
+        $resourceFinder->method('findIn')->willReturnSelf();
+        $resourceFinder->method('name')->willReturnCallback(function ($fileName) {
+            $file = $this->mockAdapter(['getPathname']);
+            switch ($fileName) {
+                case 'form_multifileupload_dropzone.html5':
+                    $file->method('getPathname')->willReturn(__DIR__.'/../../src/Resources/contao/templates/forms/form_multifileupload_dropzone.html5');
+
+                    return [$file];
+                    break;
+                case 'form_row.html5':
+                    $file->method('getPathname')->willReturn(__DIR__.'/../../vendor/contao/core-bundle/src/Resources/contao/templates/forms/form_row.html5');
+
+                    return [$file];
+                    break;
+            }
+        });
+
+        $container = System::getContainer();
+        $container->set('contao.resource_finder', $resourceFinder);
+        $container->setParameter('kernel.bundles', []);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => ['uploadFolder' => $this->getTempDir().'/files/uploads/', 'extensions' => 'csv', 'fieldType' => 'radio', 'submitOnChange' => false, 'onchange' => '', 'allowHtml' => false, 'rte' => '', 'preserveTags' => '', 'sql' => 'varchar(255)', 'encrypt' => false, 'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot']],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $backendMultiFileUpload = new BackendMultiFileUpload($arrAttributes);
+
+        $class = new MultiFileUpload($arrAttributes, $backendMultiFileUpload);
+
+        $template = "
+<div class=\"\">
+      <label style=\"font-weight: bold;\" for=\"ctrl_files\">
+                    label            </label>
+
+  <div  data-onchange=\"this.form.submit()\"  data-param-name=\"files\"  data-max-filesize=\"1.95\"  data-accepted-files=\".csv\"  data-thumbnail-width=\"90\"  data-thumbnail-height=\"90\"  data-create-image-thumbnails=\"true\"  data-request-token=\"token\"  data-previews-container=\"#ctrl_files .dropzone-previews\"  data-upload-multiple=\"\"  data-max-files=\"1\" class=\"multifileupload dropzone\" id=\"ctrl_files\">
+    <input type=\"hidden\" name=\"formattedInitial_files\" value='[]'>
+    <input type=\"hidden\" name=\"uploaded_files\" value='[]'>
+    <input type=\"hidden\" name=\"deleted_files\" value='[]'>
+    <input type=\"hidden\" name=\"files\" value='[]'>
+    <div class=\"fallback\">
+        <input type=\"file\" name=\"files\">
+    </div>
+    <div class=\"dz-container\">
+        <div class=\"dz-default dz-message\">
+            <span class=\"dz-message-head\">head</span>
+            <span class=\"dz-message-body\">body</span>
+            <span class=\"dz-message-foot\">foot</span>
+        </div>
+        <div class=\"dropzone-previews\"></div>
+    </div>
+</div>
+        
+</div>
+";
+
+        $this->assertSame($template, $class->generateMarkup());
     }
 
     /**

@@ -187,7 +187,7 @@ class MultiFileUpload extends FileUpload
                 $varValue = $this->data[$key];
                 break;
             case 'onchange':
-                $varValue = TL_MODE === 'BE' ? $this->data[$key] : 'this.form.submit()';
+                $varValue = System::getContainer()->get('huh.utils.container')->isBackend() ? $this->data[$key] : 'this.form.submit()';
                 break;
             case 'createImageThumbnails':
                 $varValue = ($this->thumbnailWidth || $this->thumbnailHeight && $this->data[$key]) ? 'true' : 'false';
@@ -335,7 +335,7 @@ class MultiFileUpload extends FileUpload
 
         // throw maximum upload size exceptions only in back end for admins/developer
         if (null !== $strError) {
-            if (TL_MODE === 'BE' && BackendUser::getInstance()->isAdmin) {
+            if (System::getContainer()->get('huh.utils.container')->isBackend() && BackendUser::getInstance()->isAdmin) {
                 throw new \Exception($strError);
             }
             System::getContainer()->get('monolog.logger.contao')->log($strError, __METHOD__, TL_ERROR);
