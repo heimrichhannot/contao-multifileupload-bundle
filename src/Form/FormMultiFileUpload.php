@@ -6,7 +6,7 @@
  * @license LGPL-3.0-or-later
  */
 
-namespace HeimrichHannot\MultiFileUpload\Form;
+namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
 use Contao\CoreBundle\Command\SymlinksCommand;
 use Contao\Database;
@@ -22,7 +22,7 @@ use Contao\Validator;
 use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseError;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
-use HeimrichHannot\MultiFileUpload\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use Model\Collection;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -102,7 +102,8 @@ class FormMultiFileUpload extends Upload
 
         $this->setAttributes($attributes);
 
-        if ($this->strTable) { // add onsubmit_callback at first onsubmit_callback position: move files after form submission
+        if ($this->strTable) {
+            // add onsubmit_callback at first onsubmit_callback position: move files after form submission
             if (is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'])) {
                 $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']] + $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'];
             } else {
@@ -138,7 +139,7 @@ class FormMultiFileUpload extends Upload
             $strUploadFolder = System::getContainer()->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
 
             if (null === $strUploadFolder) {
-                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, MultiFileUpload::UPLOAD_TMP));
+                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, System::getContainer()->getParameter('huh.multifileupload.uploadtmp')));
             }
 
             if (!is_array($arrFiles)) {
@@ -216,10 +217,10 @@ class FormMultiFileUpload extends Upload
             return;
         }
 
-        $objTmpFolder = new Folder(MultiFileUpload::UPLOAD_TMP);
+        $objTmpFolder = new Folder(System::getContainer()->getParameter('huh.multifileupload.uploadtmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.MultiFileUpload::UPLOAD_TMP)) {
+        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.System::getContainer()->getParameter('huh.multifileupload.uploadtmp'))) {
             $objTmpFolder->unprotect();
             $command = new SymlinksCommand();
             $command->setContainer(System::getContainer());

@@ -23,8 +23,8 @@ use HeimrichHannot\AjaxBundle\Exception\AjaxExitException;
 use HeimrichHannot\AjaxBundle\Manager\AjaxActionManager;
 use HeimrichHannot\AjaxBundle\Manager\AjaxManager;
 use HeimrichHannot\AjaxBundle\Manager\AjaxTokenManager;
-use HeimrichHannot\MultiFileUpload\Backend\MultiFileUpload;
-use HeimrichHannot\MultiFileUpload\Form\FormMultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload;
 use HeimrichHannot\RequestBundle\Component\HttpFoundation\Request;
 use HeimrichHannot\UtilsBundle\Arrays\ArrayUtil;
@@ -107,7 +107,7 @@ class UploadTest extends ContaoTestCase
         $GLOBALS['TL_LANG']['MSC']['dropzone']['labels'] = ['labels'];
         $GLOBALS['TL_LANG']['MSC']['dropzone']['messages'] = [];
         $GLOBALS['TL_DCA']['tl_files']['config'] = [
-            'onsubmit_callback' => [],
+            'onsubmit_callback' => ['files'],
             'dataContainer' => 'File',
         ];
 
@@ -179,6 +179,9 @@ class UploadTest extends ContaoTestCase
         $container->set('filesystem', new Filesystem());
         $container->setParameter('contao.resources_paths', [$this->getTempDir()]);
         $container->setParameter('kernel.logs_dir', $this->getTempDir());
+        $container->setParameter('huh.multifileupload.mimeThemeDefault', 'system/modules/multifileupload/assets/img/mimetypes/Numix-uTouch');
+        $container->setParameter('huh.multifileupload.uploadTmp', 'files/tmp');
+        $container->setParameter('huh.multifileupload.maxFilesDefault', '10');
         $container->set('monolog.logger.contao', $loggerAdapter);
         $container->set('security.token_storage', new TokenStorage());
         $container->set('contao.security.token_checker', $tokenChecker);
@@ -1234,6 +1237,12 @@ class UploadTest extends ContaoTestCase
         $class = new FormMultiFileUpload($arrAttributes);
         $this->assertInstanceOf(FormMultiFileUpload::class, $class);
 
+        $GLOBALS['TL_DCA']['tl_files']['config']['onsubmit_callback'] = '';
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new FormMultiFileUpload($arrAttributes);
+        $this->assertInstanceOf(FormMultiFileUpload::class, $class);
+        $this->assertSame(['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']], $GLOBALS['TL_DCA']['tl_files']['config']['onsubmit_callback']);
+
         $GLOBALS['TL_LANG']['ERR']['noUploadFolderDeclared'] = 'Kein "uploadFolder" für das Feld "%s" in eval angegeben.';
         try {
             $class = new FormMultiFileUpload([]);
@@ -1322,6 +1331,25 @@ class UploadTest extends ContaoTestCase
         $activeRecord->upload = serialize('files');
         $class = new FormMultiFileUpload($arrAttributes);
         $this->assertNull($class->moveFiles($this->getDataContainer($activeRecord)));
+
+        $filesAdapter = $this->mockAdapter(['findMultipleByUuids']);
+        $filesAdapter->method('findMultipleByUuids')->willReturn(null);
+
+        $container = System::getContainer();
+        $container->set('contao.framework', $this->mockContaoFramework([FilesModel::class => $filesAdapter]));
+        System::setContainer($container);
+        $this->assertNull($class->moveFiles($this->getDataContainer($activeRecord)));
+
+        try {
+            $filesUtil = $this->mockAdapter(['getUniqueFileNameWithinTarget', 'getFolderFromDca']);
+            $filesUtil->method('getFolderFromDca')->willReturn(null);
+            $container = System::getContainer();
+            $container->set('huh.utils.file', $filesUtil);
+            System::setContainer($container);
+            $class->moveFiles($this->getDataContainer($activeRecord));
+        } catch (\Exception $exception) {
+            $this->assertSame('Undefined index: uploadNoUploadFolderDeclared', $exception->getMessage());
+        }
     }
 
     public function testGenerateLabel()
@@ -1488,12 +1516,93 @@ class UploadTest extends ContaoTestCase
         }
     }
 
+    public function testValidateUpload()
+    {
+        $GLOBALS['TL_LANG']['ERR']['minWidth'] = 'Die Breite des Bildes darf %s Pixel nicht unterschreiten (aktuelle Bildbreite: %s Pixel).';
+        $GLOBALS['TL_LANG']['ERR']['minHeight'] = 'Die Höhe des Bildes darf %s Pixel nicht unterschreiten (aktuelle Bildhöhe: %s Pixel).';
+        $GLOBALS['TL_LANG']['ERR']['maxWidth'] = 'Die Breite des Bildes darf %s Pixel nicht überschreiten (aktuelle Bildbreite: %s Pixel).';
+        $GLOBALS['TL_LANG']['ERR']['maxHeight'] = 'Die Höhe des Bildes darf %s Pixel nicht überschreiten (aktuelle Bildhöhe: %s Pixel).';
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => $this->getTempDir().'/files/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $class = new FormMultiFileUpload($arrAttributes);
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => false]);
+
+        $function = $this->getMethod(FormMultiFileUpload::class, 'validateUpload');
+        $this->assertFalse($function->invokeArgs($class, [$file]));
+
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(1);
+        $container = System::getContainer();
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 10]);
+        $this->assertSame('Die Breite des Bildes darf 1 Pixel nicht überschreiten (aktuelle Bildbreite: 10 Pixel).', $function->invokeArgs($class, [$file]));
+
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(11);
+        $container = System::getContainer();
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 10]);
+        $this->assertSame('Die Breite des Bildes darf 11 Pixel nicht unterschreiten (aktuelle Bildbreite: 10 Pixel).', $function->invokeArgs($class, [$file]));
+
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(5);
+        $container = System::getContainer();
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 4]);
+        $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht unterschreiten (aktuelle Bildhöhe: 4 Pixel).', $function->invokeArgs($class, [$file]));
+
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(5);
+        $container = System::getContainer();
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 5, 'height' => 6]);
+        $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht überschreiten (aktuelle Bildhöhe: 6 Pixel).', $function->invokeArgs($class, [$file]));
+    }
+
     /**
      * @return DataContainer| \PHPUnit_Framework_MockObject_MockObject
      */
     public function getDataContainer($activeRecord = null)
     {
         return $this->mockClassWithProperties(DataContainer::class, ['table' => 'tl_files', 'activeRecord' => $activeRecord, 'id' => 12]);
+    }
+
+    protected function getMethod($class, $name)
+    {
+        $class = new \ReflectionClass($class);
+        $method = $class->getMethod($name);
+        $method->setAccessible(true);
+
+        return $method;
     }
 
     /**

@@ -13,20 +13,20 @@
 /**
  * Front end form fields
  */
-$GLOBALS['TL_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUpload\FormMultiFileUpload';
-$GLOBALS['BE_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUpload\Widget\BackendMultiFileUpload';
+$GLOBALS['TL_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload';
+$GLOBALS['BE_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload';
 
 /**
  * Hooks
  */
-$GLOBALS['TL_HOOKS']['executePostActions']['multifileupload'] = ['HeimrichHannot\MultiFileUpload\Widget\BackendMultiFileUpload', 'executePostActionsHook'];
+$GLOBALS['TL_HOOKS']['executePostActions']['multifileupload'] = ['HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload', 'executePostActionsHook'];
 
 /**
  * Ajax action
  */
-$GLOBALS['AJAX'][\HeimrichHannot\MultiFileUpload\MultiFileUpload::NAME] = [
+$GLOBALS['AJAX'][\HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload::NAME] = [
     'actions' => [
-        \HeimrichHannot\MultiFileUpload\MultiFileUpload::ACTION_UPLOAD => [
+        \HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload::ACTION_UPLOAD => [
             'arguments'       => [],
             'optional'        => [],
             'csrf_protection' => true, // cross-site request forgery (ajax token check)
@@ -49,16 +49,14 @@ $GLOBALS['TL_COMPONENTS']['multifileupload'] = [
     ],
 ];
 
-if (TL_MODE == 'FE')
-{
+if (TL_MODE == 'FE') {
     $GLOBALS['TL_CSS']['dropzone'] = 'system/modules/multifileupload/assets/css/dropzone.min.css|screen|static';
 
     $GLOBALS['TL_JAVASCRIPT']['dropzone']        = $strBasePath . '/dist/min/dropzone.min.js|static';
     $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'system/modules/multifileupload/assets/js/multifileupload.min.js|static';
 }
 
-if (TL_MODE == 'BE' && \Input::get('do') != 'files')
-{
+if (TL_MODE == 'BE' && \Input::get('do') != 'files') {
 
     $GLOBALS['TL_CSS']['dropzone'] = 'system/modules/multifileupload/assets/css/dropzone.min.css|screen|static';
 

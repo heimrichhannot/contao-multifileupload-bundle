@@ -6,7 +6,7 @@
  * @license LGPL-3.0-or-later
  */
 
-namespace HeimrichHannot\MultiFileUpload\Backend;
+namespace HeimrichHannot\MultiFileUploadBundle\Backend;
 
 use Contao\BackendUser;
 use Contao\Controller;
@@ -23,15 +23,7 @@ class MultiFileUpload extends FileUpload
     const NAME = 'multifileupload';
     const ACTION_UPLOAD = 'upload';
     const ACTION_UPLOAD_BACKEND = 'multifileupload_upload';
-
-    const MIME_THEME_DEFAULT = 'system/modules/multifileupload/assets/img/mimetypes/Numix-uTouch';
-    const UPLOAD_TMP = 'files/tmp';
-
     const SESSION_ALLOWED_DOWNLOADS = 'multifileupload_allowed_downloads';
-
-    // prevent disk flooding violation
-    const MAX_FILES_DEFAULT = 10;
-
     const SESSION_FIELD_KEY = 'multifileupload_fields';
 
     /**
@@ -391,7 +383,7 @@ class MultiFileUpload extends FileUpload
         $this->previewsContainer = '#ctrl_'.$this->id.' .dropzone-previews';
 
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
-        $this->maxFiles = ($this->uploadMultiple ? ($this->maxFiles ?: static::MAX_FILES_DEFAULT) : 1);
+        $this->maxFiles = ($this->uploadMultiple ? ($this->maxFiles ?: System::getContainer()->getParameter('huh.multifileupload.maxfilesdefault')) : 1);
     }
 
     /**
@@ -514,7 +506,7 @@ class MultiFileUpload extends FileUpload
             return $file->path;
         }
 
-        $themeFolder = rtrim($this->mimeFolder ?: static::MIME_THEME_DEFAULT, '/');
+        $themeFolder = rtrim($this->mimeFolder ?: System::getContainer()->getParameter('huh.multifileupload.mimethemedefault'), '/');
 
         if (!file_exists(TL_ROOT.'/'.$themeFolder.'/mimetypes.json')) {
             return null;

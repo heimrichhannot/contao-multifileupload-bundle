@@ -14,8 +14,8 @@ use Contao\System;
 use Contao\Widget;
 use HeimrichHannot\AjaxBundle\Response\Response;
 use HeimrichHannot\AjaxBundle\Response\ResponseError;
-use HeimrichHannot\MultiFileUpload\Backend\MultiFileUpload;
-use HeimrichHannot\MultiFileUpload\Form\FormMultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
 
 class BackendMultiFileUpload extends FormMultiFileUpload
 {
