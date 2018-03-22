@@ -17,6 +17,7 @@ use Contao\PageModel;
 use Contao\System;
 use Contao\TestCase\ContaoTestCase;
 use Contao\Widget;
+use HeimrichHannot\AjaxBundle\Exception\AjaxExitException;
 use HeimrichHannot\AjaxBundle\Manager\AjaxActionManager;
 use HeimrichHannot\AjaxBundle\Manager\AjaxManager;
 use HeimrichHannot\AjaxBundle\Manager\AjaxTokenManager;
@@ -24,11 +25,13 @@ use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
 use HeimrichHannot\RequestBundle\Component\HttpFoundation\Request;
 use HeimrichHannot\UtilsBundle\Arrays\ArrayUtil;
+use HeimrichHannot\UtilsBundle\Classes\ClassUtil;
 use HeimrichHannot\UtilsBundle\Container\ContainerUtil;
 use HeimrichHannot\UtilsBundle\File\FileUtil;
 use HeimrichHannot\UtilsBundle\String\StringUtil;
 use HeimrichHannot\UtilsBundle\Url\UrlUtil;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -545,6 +548,849 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 5, 'height' => 6]);
         $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht überschreiten (aktuelle Bildhöhe: 6 Pixel).', $function->invokeArgs($class, [$file]));
+    }
+
+    /**
+     * test upload controller against cross-site request.
+     *
+     * @test
+     */
+    public function testUploadHTMLInjection()
+    {
+        $strAction = $this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD);
+
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$strAction, 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        $arrFiles = [
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file   name.zip', // Name of the sent file
+                '"b<marquee onscroll=alert(1)>file   name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+        ];
+
+        $objRequest->files->add(['files' => $arrFiles[0]]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'zip',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(\HeimrichHannot\AjaxBundle\Exception\AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('bmarquee-onscrollalert1file-name.zip', $objJson->result->data->filenameSanitized);
+        }
+    }
+
+    /**
+     * test upload controller against cross-site request.
+     *
+     * @test
+     */
+    public function testInvalidAjaxUploadToken()
+    {
+        $strAction = $this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD);
+        $strAction = System::getContainer()->get('huh.utils.url')->removeQueryString([AjaxManager::AJAX_ATTR_TOKEN], $strAction);
+        $strAction = System::getContainer()->get('huh.utils.url')->addQueryString(AjaxManager::AJAX_ATTR_TOKEN.'='. 12355456, $strAction);
+
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$strAction, 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        // simulate upload of php file hidden in an image file
+        $arrFiles = [
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file   name.zip', // Name of the sent file
+                'file   name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file---name.zip', // Name of the sent file
+                'file---name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file--.--.-.--name.zip', // Name of the sent file
+                'file--.--.-.--name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file...name..zip', // Name of the sent file
+                'file...name..zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file___name.zip', // Name of the sent file
+                'file___name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/.~file   name#%&*{}:<>?+|"\'.zip', // Name of the sent file
+                '.~file   name#%&*{}:<>?+|"\'.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+        ];
+
+        $objRequest->files->add(['files' => $arrFiles]);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'zip',
+                'fieldType' => 'checkbox',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 8,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        $tokenManager = $this->mockAdapter(['getToken', 'getValue', 'isTokenValid']);
+        $tokenManager->method('getToken')->willReturnSelf();
+        $tokenManager->method('getValue')->willReturn('token');
+        $tokenManager->method('isTokenValid')->willReturn(false);
+
+        $container = System::getContainer();
+        $container->set('contao.csrf.token_manager', $tokenManager);
+        System::setContainer($container);
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('Invalid ajax token.', $objJson->message);
+        }
+    }
+
+    /**
+     * test upload controller against cross-site disk flooding.
+     *
+     * @test
+     */
+    public function testDiskFlooding()
+    {
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        $arrFiles = [
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file   name.zip', // Name of the sent file
+                'file   name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file---name.zip', // Name of the sent file
+                'file---name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file--.--.-.--name.zip', // Name of the sent file
+                'file--.--.-.--name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file...name..zip', // Name of the sent file
+                'file...name..zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file___name.zip', // Name of the sent file
+                'file___name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/.~file   name#%&*{}:<>?+|"\'.zip', // Name of the sent file
+                '.~file   name#%&*{}:<>?+|"\'.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+        ];
+
+        $objRequest->files->add(['files' => $arrFiles]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'zip',
+                'fieldType' => 'checkbox',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 2,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('Bulk file upload violation.', $objJson->message);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testSanitizeFileNames()
+    {
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        $arrFiles = [
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file   name.zip', // Name of the sent file
+                'file   name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file---name.zip', // Name of the sent file
+                'file---name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file--.--.-.--name.zip', // Name of the sent file
+                'file--.--.-.--name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file...name..zip', // Name of the sent file
+                'file...name..zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/file___name.zip', // Name of the sent file
+                'file___name.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+            new UploadedFile(// Path to the file to send
+                UNIT_TESTING_FILES.'/.~file   name#%&*{}:<>?+|"\'.zip', // Name of the sent file
+                '.~file   name#%&*{}:<>?+|"\'.zip', // mime type
+                'application/zip', // size of the file
+                48140, null, true),
+        ];
+
+        $objRequest->files->add(['files' => $arrFiles]);
+
+        $objRequest->files->add(['files' => $arrFiles]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'zip',
+                'fieldType' => 'checkbox',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 8,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('file-name.zip', $objJson->result->data[0]->filenameSanitized);
+            $this->assertSame('file-name.zip', $objJson->result->data[1]->filenameSanitized);
+            $this->assertSame('file-name.zip', $objJson->result->data[2]->filenameSanitized);
+            $this->assertSame('file-name.zip', $objJson->result->data[3]->filenameSanitized);
+            $this->assertSame('file___name.zip', $objJson->result->data[4]->filenameSanitized);
+            $this->assertSame('file-name.zip', $objJson->result->data[5]->filenameSanitized);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testMaliciousFileUploadOfInvalidCharactersInFileName()
+    {
+        file_put_contents(TL_ROOT.'/files/საბეჭდი_მანქანა.png', 'Testfile');
+
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        // simulate upload of php file hidden in an image file
+        $file = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/საბეჭდი_მანქანა.png', // Name of the sent file
+            'საბეჭდი_მანქანა.png', // mime type
+            'image/png', // size of the file
+            64693, null, true);
+
+        $objRequest->files->add(['files' => $file]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $modelAdapter = $this->mockAdapter(['find']);
+        $modelAdapter->method('find')->willReturn(null);
+
+        $framework = $this->mockContaoFramework();
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case Database::class:
+                    $database = $this->mockAdapter(['fieldExists', 'listFields']);
+                    $database->method('fieldExists')->willReturn(true);
+                    $database->method('listFields')->willReturn([]);
+
+                    return $database;
+                case File::class:
+                    $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => '4923hef8fh827fhf448f0438h']);
+                    $file = $this->mockClassWithProperties(File::class, ['getModel' => 'true']);
+                    $file->method('getModel')->willReturn($fileModel);
+
+                    return $file;
+                default:
+                    return null;
+            }
+        });
+
+        $request = new Request($framework, $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $filesModel = $this->mockClassWithProperties(FilesModel::class, ['path' => 'files/cmd_test.php', 'uuid' => 'fuuf4h3pfuh34f4uh4f444', 'filesize' => '1024']);
+        $file = $this->mockClassWithProperties(File::class, ['value' => 'value', 'name' => 'data']);
+        $file->method('getModel')->willReturn($filesModel);
+        $file->method('exists')->willReturn(true);
+
+        $fileUtils = $this->mockAdapter(['getFileFromUuid', 'sanitizeFileName', 'addUniqueIdToFilename']);
+        $fileUtils->method('getFileFromUuid')->willReturn($file);
+        $fileUtils->method('sanitizeFileName')->willReturnCallback(function ($filename) {
+            $fileUtils = new FileUtil($this->mockContaoFramework());
+            $filename = $fileUtils->sanitizeFileName($filename);
+
+            return $filename;
+        });
+        $fileUtils->method('addUniqueIdToFilename')->willReturnCallback(function ($name, $prefix) {
+            $file = new FileUtil($this->mockContaoFramework());
+
+            return $file->addUniqueIdToFilename($name, $prefix);
+        });
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['SERVER_PORT'] = 80;
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        $container->set('contao.framework', $framework);
+        $container->set('huh.utils.file', $fileUtils);
+        $container->set('huh.ajax.action', new AjaxActionManager());
+        $container->set('huh.utils.class', new ClassUtil());
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'jpg,jpeg,gif,png',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+                'isSubmitCallback' => true,
+            ],
+            'options_callback' => '',
+            'options' => '',
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('_.png', $objJson->result->data->filenameSanitized);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testUploadCSVFile()
+    {
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        @copy(__DIR__.'/../files/data.csv', TL_ROOT.'/files/data.csv');
+
+        // simulate upload of php file hidden in an image file
+        $file = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/data.csv', // Name of the sent file
+            'data.csv', // mime type
+            'text/csv', // size of the file
+            7006, null, true);
+
+        $objRequest->files->add(['files' => $file]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $modelAdapter = $this->mockAdapter(['find']);
+        $modelAdapter->method('find')->willReturn(null);
+
+        $framework = $this->mockContaoFramework();
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case Database::class:
+                    $database = $this->mockAdapter(['fieldExists', 'listFields']);
+                    $database->method('fieldExists')->willReturn(true);
+                    $database->method('listFields')->willReturn([]);
+
+                    return $database;
+                case File::class:
+                    $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => '4923hef8fh827fhf448f0438h']);
+                    $file = $this->mockClassWithProperties(File::class, ['getModel' => 'true']);
+                    $file->method('getModel')->willReturn($fileModel);
+
+                    return $file;
+                default:
+                    return null;
+            }
+        });
+
+        $request = new Request($framework, $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $filesModel = $this->mockClassWithProperties(FilesModel::class, ['path' => 'files/cmd_test.php', 'uuid' => 'fuuf4h3pfuh34f4uh4f444', 'filesize' => '1024']);
+        $file = $this->mockClassWithProperties(File::class, ['value' => 'value', 'name' => 'data']);
+        $file->method('getModel')->willReturn($filesModel);
+        $file->method('exists')->willReturn(true);
+
+        $fileUtils = $this->mockAdapter(['getFileFromUuid', 'sanitizeFileName', 'addUniqueIdToFilename']);
+        $fileUtils->method('getFileFromUuid')->willReturn($file);
+        $fileUtils->method('sanitizeFileName')->willReturnCallback(function ($filename) { return $filename; });
+        $fileUtils->method('addUniqueIdToFilename')->willReturnCallback(function ($name, $prefix) {
+            $file = new FileUtil($this->mockContaoFramework());
+
+            return $file->addUniqueIdToFilename($name, $prefix);
+        });
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['SERVER_PORT'] = 80;
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        $container->set('contao.framework', $framework);
+        $container->set('huh.utils.file', $fileUtils);
+        $container->set('huh.ajax.action', new AjaxActionManager());
+        $container->set('huh.utils.class', new ClassUtil());
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame(200, $objJson->statusCode);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testMaliciousFileUploadOfDisguisedPhpFile()
+    {
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        @copy(__DIR__.'/../files/cmd_test.php.jpg', UNIT_TESTING_FILES.'/cmd_test.php.jpg');
+
+        // simulate upload of php file hidden in an image file
+        $file = new UploadedFile(UNIT_TESTING_FILES.'/cmd_test.php.jpg', // Path to the file to send
+            'cmd_test.php.jpg', // Name of the sent file
+            'image/jpeg',  // mime type
+            652,// size of the file
+            null, true);
+
+        $objRequest->files->add(['files' => $file]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'jpg,jpeg,gif,png',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('Unerlaubter Dateityp: text/x-php', $objJson->result->data->error);
+            $this->assertSame('cmd_test-php.jpg', $objJson->result->data->filenameSanitized);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testMaliciousFileUploadOfInvalidTypes()
+    {
+        $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
+        $objRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $objRequest->request->set('requestToken', \RequestToken::get());
+        $objRequest->request->set('files', []);
+
+        // prevent test file removal
+        @copy(__DIR__.'/../files/cmd_test.php.jpg', UNIT_TESTING_FILES.'/cmd_test.php');
+        @copy(__DIR__.'/../files/cmd_test.php.jpg', UNIT_TESTING_FILES.'/cmd_test1.php');
+
+        $file = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/cmd_test.php', // Name of the sent file
+            'cmd_test.php', // mime type
+            'text/x-php', // size of the file
+            652, null, true);
+
+        $file2 = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/cmd_test1.php', // Name of the sent file
+            'cmd_test1.php', // mime type
+            'text/x-php', // size of the file
+            652, null, true);
+
+        $objRequest->files->add(['files' => [$file, $file2]]);
+
+        $requestStack = new RequestStack();
+        $requestStack->push($objRequest);
+
+        $backendMatcher = new RequestMatcher('/contao', 'test.com', null, ['192.168.1.0']);
+        $frontendMatcher = new RequestMatcher('/index', 'test.com', null, ['192.168.1.0']);
+
+        $scopeMatcher = new ScopeMatcher($backendMatcher, $frontendMatcher);
+
+        $tokenAdapter = $this->mockAdapter(['getToken', 'getValue']);
+        $tokenAdapter->method('getToken')->willReturnSelf();
+        $tokenAdapter->method('getValue')->willReturn('token');
+
+        $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
+        $request->setGet('file', '');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
+        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('files', []);
+        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+
+        $container = System::getContainer();
+        $container->set('huh.request', $request);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'jpg,jpeg,gif,png',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+                'isSubmitCallback' => true,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files');
+
+        $arrAttributes['strTable'] = 'tl_files';
+
+        try {
+            $objUploader = new FormMultiFileUpload($arrAttributes);
+            $objUploader->upload();
+            // unreachable code: if no exception is thrown after form was created, something went wrong
+            $this->expectException(AjaxExitException::class);
+        } catch (AjaxExitException $e) {
+            $objJson = json_decode($e->getMessage());
+
+            $this->assertSame('Unerlaubte Dateiendung: php', $objJson->result->data[0]->error);
+            $this->assertSame('cmd_test.php', $objJson->result->data[0]->filenameSanitized);
+
+            $this->assertSame('Unerlaubte Dateiendung: php', $objJson->result->data[1]->error);
+            $this->assertSame('cmd_test1.php', $objJson->result->data[1]->filenameSanitized);
+        }
     }
 
     /**
