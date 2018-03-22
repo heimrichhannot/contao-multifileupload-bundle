@@ -591,7 +591,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $container = System::getContainer();
         $container->set('huh.request', $request);
@@ -621,15 +621,11 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         $arrAttributes['strTable'] = 'tl_files';
 
-        try {
-            $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-            $this->expectException(\HeimrichHannot\AjaxBundle\Exception\AjaxExitException::class);
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
-
-            $this->assertSame('bmarquee-onscrollalert1file-name.zip', $objJson->result->data->filenameSanitized);
-        }
+        $objUploader = new FormMultiFileUpload($arrAttributes);
+        $result = $objUploader->upload();
+        $result = $result->getResult();
+        $data = $result->getData();
+        $this->assertSame('bmarquee-onscrollalert1file-name.zip', $data['filenameSanitized']);
     }
 
     /**
@@ -665,7 +661,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $container = System::getContainer();
         $container->set('huh.request', $request);
@@ -743,11 +739,10 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         try {
             $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
-
-            $this->assertSame('Invalid ajax token.', $objJson->message);
+            $objUploader->upload();
+        } catch (AjaxExitException $exception) {
+            $objJson = json_decode($exception->getMessage());
+            $this->assertSame('Invalid Request Token!', $objJson->message);
         }
     }
 
@@ -815,7 +810,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $container = System::getContainer();
         $container->set('huh.request', $request);
@@ -848,11 +843,9 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         try {
             $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-            $this->expectException(AjaxExitException::class);
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
-
+            $objUploader->upload();
+        } catch (AjaxExitException $exception) {
+            $objJson = json_decode($exception->getMessage());
             $this->assertSame('Bulk file upload violation.', $objJson->message);
         }
     }
@@ -921,7 +914,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $container = System::getContainer();
         $container->set('huh.request', $request);
@@ -952,20 +945,17 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         $arrAttributes['strTable'] = 'tl_files';
 
-        try {
-            $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-            $this->expectException(AjaxExitException::class);
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
+        $objUploader = new FormMultiFileUpload($arrAttributes);
+        $result = $objUploader->upload();
+        $result = $result->getResult();
+        $data = $result->getData();
 
-            $this->assertSame('file-name.zip', $objJson->result->data[0]->filenameSanitized);
-            $this->assertSame('file-name.zip', $objJson->result->data[1]->filenameSanitized);
-            $this->assertSame('file-name.zip', $objJson->result->data[2]->filenameSanitized);
-            $this->assertSame('file-name.zip', $objJson->result->data[3]->filenameSanitized);
-            $this->assertSame('file___name.zip', $objJson->result->data[4]->filenameSanitized);
-            $this->assertSame('file-name.zip', $objJson->result->data[5]->filenameSanitized);
-        }
+        $this->assertSame('file-name.zip', $data[0]['filenameSanitized']);
+        $this->assertSame('file-name.zip', $data[1]['filenameSanitized']);
+        $this->assertSame('file-name.zip', $data[2]['filenameSanitized']);
+        $this->assertSame('file-name.zip', $data[3]['filenameSanitized']);
+        $this->assertSame('file___name.zip', $data[4]['filenameSanitized']);
+        $this->assertSame('file-name.zip', $data[5]['filenameSanitized']);
     }
 
     /**
@@ -1029,7 +1019,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $filesModel = $this->mockClassWithProperties(FilesModel::class, ['path' => 'files/cmd_test.php', 'uuid' => 'fuuf4h3pfuh34f4uh4f444', 'filesize' => '1024']);
         $file = $this->mockClassWithProperties(File::class, ['value' => 'value', 'name' => 'data']);
@@ -1085,15 +1075,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         $arrAttributes['strTable'] = 'tl_files';
 
-        try {
-            $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-            $this->expectException(AjaxExitException::class);
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
+        $objUploader = new FormMultiFileUpload($arrAttributes);
+        $result = $objUploader->upload();
+        $result = $result->getResult();
+        $data = $result->getData();
 
-            $this->assertSame('_.png', $objJson->result->data->filenameSanitized);
-        }
+        $this->assertSame('_.png', $data['filenameSanitized']);
     }
 
     /**
@@ -1157,7 +1144,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
-        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
+        $request->query->remove(AjaxManager::AJAX_ATTR_ACT);
 
         $filesModel = $this->mockClassWithProperties(FilesModel::class, ['path' => 'files/cmd_test.php', 'uuid' => 'fuuf4h3pfuh34f4uh4f444', 'filesize' => '1024']);
         $file = $this->mockClassWithProperties(File::class, ['value' => 'value', 'name' => 'data']);
@@ -1208,15 +1195,9 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
         $arrAttributes['strTable'] = 'tl_files';
 
-        try {
-            $objUploader = new FormMultiFileUpload($arrAttributes);
-            // unreachable code: if no exception is thrown after form was created, something went wrong
-            $this->expectException(AjaxExitException::class);
-        } catch (AjaxExitException $e) {
-            $objJson = json_decode($e->getMessage());
-
-            $this->assertSame(200, $objJson->statusCode);
-        }
+        $objUploader = new FormMultiFileUpload($arrAttributes);
+        $result = $objUploader->upload();
+        $this->assertSame(200, $result->getStatusCode());
     }
 
     /**

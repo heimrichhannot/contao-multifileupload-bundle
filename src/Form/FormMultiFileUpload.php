@@ -65,42 +65,13 @@ class FormMultiFileUpload extends Upload
             throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['noUploadFolderDeclared'], $this->name));
         }
 
-        if (isset($attributes['strTable'])) {
-            $this->isSingleFile($attributes);
-        }
-
-        $attributes['uploadAction'] = $this->uploadAction;
-
-        if (System::getContainer()->get('huh.utils.container')->isFrontend()) {
-            $attributes['uploadActionParams'] = http_build_query(System::getContainer()->get('huh.ajax.action')->getParams(MultiFileUpload::NAME, $this->uploadAction));
-        }
-
-        $attributes['parallelUploads'] = 1; // in order to provide new token for each ajax request, upload one by one
-
-        $attributes['addRemoveLinks'] = isset($attributes['addRemoveLinks']) ? $attributes['addRemoveLinks'] : true;
-
-        if (isset($attributes['value']) && !is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
-            $attributes['value'] = json_decode($attributes['value']);
-        }
-
-        // bin to string -> never pass binary to the widget!!
-        if (isset($attributes['value'])) {
-            if (is_array($attributes['value'])) {
-                $attributes['value'] = array_map(function ($val) {
-                    return Validator::isBinaryUuid($val) ? StringUtil::binToUuid($val) : $val;
-                }, $attributes['value']);
-            } else {
-                $attributes['value'] = [
-                    Validator::isBinaryUuid($attributes['value']) ? StringUtil::binToUuid($attributes['value']) : $attributes['value'],
-                ];
-            }
-        }
+        $attributes = $this->setAttributes($attributes);
 
         parent::__construct($attributes);
 
         $this->objUploader = new MultiFileUpload($attributes, $this);
 
-        $this->setAttributes($attributes);
+        $this->setVariables($attributes);
 
         if ($this->strTable) {
             // add onsubmit_callback at first onsubmit_callback position: move files after form submission
@@ -384,6 +355,47 @@ class FormMultiFileUpload extends Upload
 
     /**
      * @param array $attributes
+     *
+     * @return array
+     */
+    public function setAttributes(array $attributes)
+    {
+        if (isset($attributes['strTable'])) {
+            $this->isSingleFile($attributes);
+        }
+
+        $attributes['uploadAction'] = $this->uploadAction;
+
+        if (System::getContainer()->get('huh.utils.container')->isFrontend()) {
+            $attributes['uploadActionParams'] = http_build_query(System::getContainer()->get('huh.ajax.action')->getParams(MultiFileUpload::NAME, $this->uploadAction));
+        }
+
+        $attributes['parallelUploads'] = 1; // in order to provide new token for each ajax request, upload one by one
+
+        $attributes['addRemoveLinks'] = isset($attributes['addRemoveLinks']) ? $attributes['addRemoveLinks'] : true;
+
+        if (isset($attributes['value']) && !is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
+            $attributes['value'] = json_decode($attributes['value']);
+        }
+
+        // bin to string -> never pass binary to the widget!!
+        if (isset($attributes['value'])) {
+            if (is_array($attributes['value'])) {
+                $attributes['value'] = array_map(function ($val) {
+                    return Validator::isBinaryUuid($val) ? StringUtil::binToUuid($val) : $val;
+                }, $attributes['value']);
+            } else {
+                $attributes['value'] = [
+                    Validator::isBinaryUuid($attributes['value']) ? StringUtil::binToUuid($attributes['value']) : $attributes['value'],
+                ];
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @param array $attributes
      */
     protected function isSingleFile(array $attributes)
     {
@@ -406,7 +418,7 @@ class FormMultiFileUpload extends Upload
     /**
      * @param array $attributes
      */
-    protected function setAttributes(array $attributes)
+    protected function setVariables(array $attributes)
     {
         if (null !== $this->objUploader && is_array($this->objUploader->getData())) {
             $attributes = array_merge($attributes, $this->objUploader->getData());
