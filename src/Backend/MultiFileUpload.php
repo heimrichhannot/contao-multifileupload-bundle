@@ -501,7 +501,7 @@ class MultiFileUpload extends FileUpload
             return $file->path;
         }
 
-        $themeFolder = rtrim($this->mimeFolder ?: System::getContainer()->getParameter('huh.multifileupload.mimethemedefault'), '/');
+        $themeFolder = rtrim($this->mimeFolder ?: System::getContainer()->getParameter('huh.multifileupload.mime_theme_default'), '/');
 
         if (!file_exists(TL_ROOT.'/'.$themeFolder.'/mimetypes.json')) {
             return null;

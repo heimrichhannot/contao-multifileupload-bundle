@@ -48,4 +48,16 @@ $legacyLoader = function ($class) {
 
 spl_autoload_register($legacyLoader, true, true);
 
+if (!defined('TL_ROOT')) {
+    define('TL_ROOT', '/tmp/MultiFileUploadTmp');
+}
+
+if (!defined('TL_ERROR')) {
+    define('TL_ERROR', 'ERROR');
+}
+
+if (!defined('UNIT_TESTING_FILES')) {
+    define('UNIT_TESTING_FILES', TL_ROOT.'/files');
+}
+
 return $loader;

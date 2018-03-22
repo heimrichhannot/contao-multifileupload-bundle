@@ -139,7 +139,7 @@ class FormMultiFileUpload extends Upload
             $strUploadFolder = System::getContainer()->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
 
             if (null === $strUploadFolder) {
-                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, System::getContainer()->getParameter('huh.multifileupload.uploadtmp')));
+                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, System::getContainer()->getParameter('huh.multifileupload.upload_tmp')));
             }
 
             if (!is_array($arrFiles)) {
@@ -222,10 +222,10 @@ class FormMultiFileUpload extends Upload
             $objResponse->output();
         }
 
-        $objTmpFolder = new Folder(System::getContainer()->getParameter('huh.multifileupload.uploadtmp'));
+        $objTmpFolder = new Folder(System::getContainer()->getParameter('huh.multifileupload.upload_tmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.System::getContainer()->getParameter('huh.multifileupload.uploadtmp'))) {
+        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.System::getContainer()->getParameter('huh.multifileupload.upload_tmp'))) {
             $objTmpFolder->unprotect();
             $command = new SymlinksCommand();
             $command->setContainer(System::getContainer());
