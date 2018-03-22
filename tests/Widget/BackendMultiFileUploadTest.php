@@ -9,6 +9,7 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Tests\Widget;
 
 use Contao\BackendUser;
+use Contao\Controller;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Database;
 use Contao\DataContainer;
@@ -136,7 +137,12 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         $database->method('fieldExists')->willReturn(true);
         $database->method('listFields')->willReturn([]);
 
-        $framework = $this->mockContaoFramework();
+        $controller = $this->mockAdapter(['replaceInsertTags']);
+        $controller->method('replaceInsertTags')->willReturnCallback(function ($string, $bln) {
+            return Controller::replaceInsertTags($string, $bln);
+        });
+
+        $framework = $this->mockContaoFramework([Controller::class => $controller]);
         $framework->method('createInstance')->willReturn($database);
 
         $loggerAdapter = $this->mockAdapter(['log']);
@@ -275,7 +281,12 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         $widgetAdapter = $this->mockAdapter(['getAttributesFromDca']);
         $widgetAdapter->method('getAttributesFromDca')->willReturn($arrAttributes);
 
-        $framework = $this->mockContaoFramework([Widget::class => $widgetAdapter]);
+        $controller = $this->mockAdapter(['replaceInsertTags']);
+        $controller->method('replaceInsertTags')->willReturnCallback(function ($string, $bln) {
+            return Controller::replaceInsertTags($string, $bln);
+        });
+
+        $framework = $this->mockContaoFramework([Widget::class => $widgetAdapter, Controller::class => $controller]);
         $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
             switch ($class) {
                 case Database::class:
@@ -301,7 +312,6 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         $request->request->set('requestToken', \RequestToken::get());
         $request->request->set('files', []);
         $request->setPost('field', 'field');
-//        $request->setGet(AjaxManager::AJAX_ATTR_ACT, 'upload');
 
         $filesModel = $this->mockClassWithProperties(FilesModel::class, ['path' => 'files/cmd_test.php', 'uuid' => 'fuuf4h3pfuh34f4uh4f444', 'filesize' => '1024']);
         $file = $this->mockClassWithProperties(File::class, ['value' => 'value', 'name' => 'data']);

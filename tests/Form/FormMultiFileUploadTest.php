@@ -8,6 +8,7 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Tests\Form;
 
+use Contao\Controller;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Database;
 use Contao\DataContainer;
@@ -141,7 +142,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $database->method('fieldExists')->willReturn(true);
         $database->method('listFields')->willReturn([]);
 
-        $framework = $this->mockContaoFramework();
+        $controller = $this->mockAdapter(['replaceInsertTags']);
+        $controller->method('replaceInsertTags')->willReturnCallback(function ($string, $bln) {
+            return Controller::replaceInsertTags($string, $bln);
+        });
+
+        $framework = $this->mockContaoFramework([Controller::class => $controller]);
         $framework->method('createInstance')->willReturn($database);
 
         $loggerAdapter = $this->mockAdapter(['log']);
