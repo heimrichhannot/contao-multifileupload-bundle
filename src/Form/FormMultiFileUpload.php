@@ -493,33 +493,33 @@ class FormMultiFileUpload extends Upload
     /**
      * Validate the uploaded file.
      *
-     * @param File $objFile
+     * @param File $file
      *
      * @return string|bool The error message or false for no error
      */
-    protected function validateUpload(File $objFile)
+    protected function validateUpload(File $file)
     {
-        if ($objFile->isImage) {
+        if ($file->isImage) {
             $minWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageWidth);
             $minHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageHeight);
 
             $maxWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageWidth);
             $maxHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageHeight);
 
-            if ($minWidth > 0 && $objFile->width < $minWidth) {
-                return sprintf($this->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $objFile->width);
+            if ($minWidth > 0 && $file->width < $minWidth) {
+                return sprintf($this->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $file->width);
             }
 
-            if ($minHeight > 0 && $objFile->height < $minHeight) {
-                return sprintf($this->minImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $objFile->height);
+            if ($minHeight > 0 && $file->height < $minHeight) {
+                return sprintf($this->minImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $file->height);
             }
 
-            if ($maxWidth > 0 && $objFile->width > $maxWidth) {
-                return sprintf($this->maxImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxWidth'], $maxWidth, $objFile->width);
+            if ($maxWidth > 0 && $file->width > $maxWidth) {
+                return sprintf($this->maxImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxWidth'], $maxWidth, $file->width);
             }
 
-            if ($maxHeight > 0 && $objFile->height > $maxHeight) {
-                return sprintf($this->maxImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxHeight'], $maxHeight, $objFile->height);
+            if ($maxHeight > 0 && $file->height > $maxHeight) {
+                return sprintf($this->maxImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxHeight'], $maxHeight, $file->height);
             }
         }
 
@@ -572,15 +572,15 @@ class FormMultiFileUpload extends Upload
                 $fileModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($relativePath);
             }
 
+            if (!$file instanceof File || null === $fileModel) {
+                // remove file from file system
+                @unlink(TL_ROOT.'/'.$relativePath);
+
+                return $this->prepareErrorArray($GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'], $originalFileNameEncoded, $sanitizeFileName);
+            }
+
             $strUuid = $fileModel->uuid;
         } catch (\InvalidArgumentException $e) {
-            // remove file from file system
-            @unlink(TL_ROOT.'/'.$relativePath);
-
-            return $this->prepareErrorArray($GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'], $originalFileNameEncoded, $sanitizeFileName);
-        }
-
-        if (!$file instanceof File || null === $fileModel) {
             // remove file from file system
             @unlink(TL_ROOT.'/'.$relativePath);
 

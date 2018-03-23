@@ -403,6 +403,41 @@ class MultiFileUploadTest extends ContaoTestCase
         $this->assertSame('Backend.openModalIframe({"width":"664","title":"","url":"href","height":"299"});', $result);
     }
 
+    public function testGePreviewImage()
+    {
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => ['uploadFolder' => TL_ROOT.'/files/uploads/', 'extensions' => 'csv', 'fieldType' => 'radio', 'submitOnChange' => false, 'onchange' => '', 'allowHtml' => false, 'rte' => '', 'preserveTags' => '', 'sql' => 'varchar(255)', 'encrypt' => false, 'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot']],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => false, 'extension' => 'extension']);
+
+        $class = new MultiFileUpload($arrAttributes);
+        $function = $this->getMethod(MultiFileUpload::class, 'getPreviewImage');
+        $this->assertNull($function->invokeArgs($class, [$file]));
+
+        $container = System::getContainer();
+        $container->setParameter('huh.multifileupload.mime_theme_default', 'files');
+        System::setContainer($container);
+
+        @copy(__DIR__.'/../../src/Resources/public/img/mimetypes/Numix-uTouch/mimetypes.json', TL_ROOT.'/files/mimetypes.json');
+        $this->assertNull($function->invokeArgs($class, [$file]));
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => false, 'extension' => 'csv']);
+        $this->assertNull($function->invokeArgs($class, [$file]));
+
+        copy(__DIR__.'/../../src/Resources/public/img/mimetypes/Numix-uTouch/application-database.png', TL_ROOT.'/files/application-database.png');
+        $this->assertSame('files/application-database.png', $function->invokeArgs($class, [$file]));
+
+        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'extension' => 'csv', 'path' => 'files/application-database.png']);
+        $this->assertSame('files/application-database.png', $function->invokeArgs($class, [$file]));
+    }
+
     protected function getMethod($class, $name)
     {
         $class = new \ReflectionClass($class);

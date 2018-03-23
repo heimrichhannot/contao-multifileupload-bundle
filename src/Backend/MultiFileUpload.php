@@ -511,7 +511,7 @@ class MultiFileUpload extends FileUpload
 
         $objMines = json_decode($objMimeFile->getContent());
 
-        if (!$objMines->{$file->extension}) {
+        if (!property_exists($objMines, $file->extension)) {
             return null;
         }
 

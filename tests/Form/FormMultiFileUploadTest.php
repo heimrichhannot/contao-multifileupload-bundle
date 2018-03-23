@@ -12,6 +12,7 @@ use Contao\Controller;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Database;
 use Contao\DataContainer;
+use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\PageModel;
@@ -32,6 +33,7 @@ use HeimrichHannot\UtilsBundle\File\FileUtil;
 use HeimrichHannot\UtilsBundle\String\StringUtil;
 use HeimrichHannot\UtilsBundle\Url\UrlUtil;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -1378,6 +1380,180 @@ class FormMultiFileUploadTest extends ContaoTestCase
             $this->assertSame('Unerlaubte Dateiendung: php', $objJson->result->data[1]->error);
             $this->assertSame('cmd_test1.php', $objJson->result->data[1]->filenameSanitized);
         }
+    }
+
+    public function testUploadFile()
+    {
+        $dca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'jpg',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+                'isSubmitCallback' => true,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $attributes = Widget::getAttributesFromDca($dca, 'files');
+        $formMultiFileUpload = new FormMultiFileUpload($attributes);
+        $function = $this->getMethod(FormMultiFileUpload::class, 'uploadFile');
+
+        $uploadFile = $this->createMock(UploadedFile::class);
+        $uploadFile->method('getError')->willReturn('error');
+        $uploadFile->method('getClientOriginalName')->willReturn('originalName');
+
+        $this->assertSame(['error' => 'error', 'filenameOrigEncoded' => 'originalName', 'filenameSanitized' => 'originalname'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
+
+        $uploadFile = $this->createMock(UploadedFile::class);
+        $uploadFile->method('getError')->willReturn(false);
+        $uploadFile->method('getClientOriginalName')->willReturn('originalName');
+        $uploadFile->method('move')->willThrowException(new FileException('error'));
+        $uploadFile->method('getClientOriginalExtension')->willReturn('csv');
+        $uploadFile->method('getClientMimeType')->willReturn('csv');
+        $uploadFile->method('getMimeType')->willReturn('csv');
+
+        $this->assertSame(['error' => 'Unerlaubte Dateiendung: csv', 'filenameOrigEncoded' => 'originalName', 'filenameSanitized' => 'originalname'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
+
+        $dca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => UNIT_TESTING_FILES.'/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'encrypt' => false,
+                'maxFiles' => 6,
+                'isSubmitCallback' => true,
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+        ];
+
+        $attributes = Widget::getAttributesFromDca($dca, 'files');
+        $formMultiFileUpload = new FormMultiFileUpload($attributes);
+
+        // create new file
+        file_put_contents(UNIT_TESTING_FILES.'/dataTest.csv', 'test');
+
+        // throwing invalid argument exception case
+        $uploadFile = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/dataTest.csv', // Name of the sent file
+            'dataTest.csv', // mime type
+            'text/csv', // size of the file
+            7006, null, true);
+
+        $dbafs = $this->mockAdapter(['shouldBeSynchronized', 'addResource']);
+        $dbafs->method('shouldBeSynchronized')->willReturn(true);
+        $dbafs->method('addResource')->willThrowException(new \InvalidArgumentException('invalid argument'));
+
+        $framework = $this->mockContaoFramework([Dbafs::class => $dbafs]);
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case File::class:
+                    $file = $this->mockClassWithProperties(File::class, []);
+                    $file->method('getModel')->willReturn(null);
+
+                    return $file;
+                    break;
+                default:
+                    return null;
+                    break;
+            }
+        });
+        $GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'] = 'Speicherziel liegt außerhalb des Contao-Upload-Verzeichnisses.';
+        $container = System::getContainer();
+        $container->set('contao.framework', $framework);
+        System::setContainer($container);
+
+        $this->assertSame(['error' => 'Speicherziel liegt außerhalb des Contao-Upload-Verzeichnisses.', 'filenameOrigEncoded' => 'dataTest.csv', 'filenameSanitized' => 'datatest.csv'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
+        $this->assertFalse(file_exists(UNIT_TESTING_FILES.'/dataTest.csv'));
+        // create new file
+        file_put_contents(UNIT_TESTING_FILES.'/dataTest.csv', 'test');
+
+        // throwing invalid argument exception case
+        $uploadFile = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/dataTest.csv', // Name of the sent file
+            'dataTest.csv', // mime type
+            'text/csv', // size of the file
+            7006, null, true);
+
+        $dbafs = $this->mockAdapter(['shouldBeSynchronized', 'addResource']);
+        $dbafs->method('shouldBeSynchronized')->willReturn(true);
+        $dbafs->method('addResource')->willReturn(null);
+
+        $framework = $this->mockContaoFramework([Dbafs::class => $dbafs]);
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case File::class:
+                    $file = $this->mockClassWithProperties(File::class, []);
+                    $file->method('getModel')->willReturn(null);
+
+                    return $file;
+                    break;
+                default:
+                    return null;
+                    break;
+            }
+        });
+        $container = System::getContainer();
+        $container->set('contao.framework', $framework);
+        System::setContainer($container);
+
+        $this->assertSame(['error' => 'Speicherziel liegt außerhalb des Contao-Upload-Verzeichnisses.', 'filenameOrigEncoded' => 'dataTest.csv', 'filenameSanitized' => 'datatest.csv'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
+
+        // create new file
+        file_put_contents(UNIT_TESTING_FILES.'/dataTest.csv', 'test');
+
+        // throwing invalid argument exception case
+        $uploadFile = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/dataTest.csv', // Name of the sent file
+            'dataTest.csv', // mime type
+            'text/csv', // size of the file
+            7006, null, true);
+
+        $framework = $this->mockContaoFramework([Dbafs::class => $dbafs]);
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case File::class:
+                    $filesModel = $this->mockClassWithProperties(FilesModel::class, ['isImage' => true, 'uuid' => 'uuid']);
+                    $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 5]);
+                    $file->method('getModel')->willReturn($filesModel);
+
+                    return $file;
+                    break;
+                default:
+                    return null;
+                    break;
+            }
+        });
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(10);
+
+        $container = System::getContainer();
+        $container->set('contao.framework', $framework);
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $this->assertSame(['error' => 'Die Breite des Bildes darf 10 Pixel nicht unterschreiten (aktuelle Bildbreite: 5 Pixel).', 'filenameOrigEncoded' => 'dataTest.csv', 'filenameSanitized' => 'datatest.csv'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
     }
 
     /**
