@@ -221,21 +221,21 @@ class MultiFileUpload extends FileUpload
      */
     public function prepareFile($uuid)
     {
-        if (null !== ($objFile = System::getContainer()->get('huh.utils.file')->getFileFromUuid($uuid)) && $objFile->exists()) {
-            $this->addAllowedDownload($objFile->value);
+        if (null !== ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($uuid)) && $file->exists()) {
+            $this->addAllowedDownload($file->value);
 
             $arrReturn = [
                 // remove timestamp from filename
-                'name' => System::getContainer()->get('huh.utils.string')->pregReplaceLast('@_[a-f0-9]{13}@', $objFile->name),
-                'uuid' => StringUtil::binToUuid($objFile->getModel()->uuid),
-                'size' => $objFile->filesize,
+                'name' => System::getContainer()->get('huh.utils.string')->pregReplaceLast('@_[a-f0-9]{13}@', $file->name),
+                'uuid' => StringUtil::binToUuid($file->getModel()->uuid),
+                'size' => $file->filesize,
             ];
 
-            if (null !== ($strImage = $this->getPreviewImage($objFile))) {
+            if (null !== ($strImage = $this->getPreviewImage($file))) {
                 $arrReturn['dataURL'] = $strImage;
             }
 
-            if (null !== ($strInfoUrl = $this->getInfoAction($objFile))) {
+            if (null !== ($strInfoUrl = $this->getInfoAction($file))) {
                 $arrReturn['info'] = $strInfoUrl;
             }
 

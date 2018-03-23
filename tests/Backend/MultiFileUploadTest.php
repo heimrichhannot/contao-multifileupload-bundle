@@ -12,6 +12,7 @@ use Contao\Controller;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Database;
 use Contao\File;
+use Contao\FilesModel;
 use Contao\PageModel;
 use Contao\System;
 use Contao\TestCase\ContaoTestCase;
@@ -436,6 +437,51 @@ class MultiFileUploadTest extends ContaoTestCase
 
         $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'extension' => 'csv', 'path' => 'files/application-database.png']);
         $this->assertSame('files/application-database.png', $function->invokeArgs($class, [$file]));
+    }
+
+    public function testPrepareValue()
+    {
+        $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => 'dfd1cc5e-2c49-11e8-b467-0ed5f89f718b']);
+
+        $file = $this->mockClassWithProperties(File::class, ['filesize' => 1024, 'name' => 'name', 'isImage' => true, 'path' => 'path', 'value' => 'value']);
+        $file->method('getModel')->willReturn($fileModel);
+        $file->method('exists')->willReturn(true);
+
+        $fileUtils = $this->mockAdapter(['getFileFromUuid']);
+        $fileUtils->method('getFileFromUuid')->willReturn($file);
+
+        $container = System::getContainer();
+        $container->set('huh.utils.file', $fileUtils);
+        System::setContainer($container);
+
+        $arrDca = [
+            'label' => 'label',
+            'inputType' => 'multifileupload',
+            'eval' => [
+                'uploadFolder' => TL_ROOT.'/files/uploads/',
+                'extensions' => 'csv',
+                'fieldType' => 'radio',
+                'submitOnChange' => false,
+                'onchange' => '',
+                'allowHtml' => false,
+                'rte' => '',
+                'preserveTags' => '',
+                'sql' => 'varchar(255)',
+                'rgxp' => '',
+                'encrypt' => false,
+                'labels' => ['head' => 'head', 'body' => 'body', 'foot' => 'foot'],
+            ],
+            'options_callback' => '',
+            'options' => '',
+            'isSubmitCallback' => true,
+            'exclude' => true,
+        ];
+        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', ['value'], 'title', 'tl_files');
+        $class = new MultiFileUpload($arrAttributes);
+
+        $function = $this->getMethod(MultiFileUpload::class, 'prepareValue');
+        $result = $function->invoke($class);
+        $this->assertSame('[{"name":"name","uuid":"64666431-6363-3565-2d32-6334392d3131","size":1024,"dataURL":"path"}]', $result);
     }
 
     protected function getMethod($class, $name)
