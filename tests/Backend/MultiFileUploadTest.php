@@ -484,6 +484,15 @@ class MultiFileUploadTest extends ContaoTestCase
         $this->assertSame('[{"name":"name","uuid":"64666431-6363-3565-2d32-6334392d3131","size":1024,"dataURL":"path"}]', $result);
     }
 
+    public function testGeBytes()
+    {
+        $class = $this->getMockBuilder(MultiFileUpload::class)->setMethods(['getByteSize'])->disableOriginalConstructor()->getMock();
+        $function = $this->getMethod(MultiFileUpload::class, 'getByteSize');
+        $this->assertSame(1024.0, $function->invokeArgs($class, ['1KB']));
+        $this->assertSame(1048576.0, $function->invokeArgs($class, ['1MB']));
+        $this->assertSame(1073741824.0, $function->invokeArgs($class, ['1GB']));
+    }
+
     protected function getMethod($class, $name)
     {
         $class = new \ReflectionClass($class);

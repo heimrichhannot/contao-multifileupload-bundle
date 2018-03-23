@@ -54,11 +54,6 @@
     "preferred-install": "dist"
   },
   "extra": {
-    "contao": {
-      "sources": {
-        "": "system/modules/multifileupload"
-      }
-    },
     "contao-manager-plugin": "HeimrichHannot\\MultiFileUploadBundle\\ContaoManager\\Plugin"
   }
 }
