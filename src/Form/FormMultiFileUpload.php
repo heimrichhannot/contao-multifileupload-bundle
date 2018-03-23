@@ -592,15 +592,15 @@ class FormMultiFileUpload extends Upload
         }
 
         // upload_path_callback
-        if (is_array($this->validate_upload_callback)) {
-            foreach ($this->validate_upload_callback as $callback) {
-                if (!class_exists($callback[0])) {
+        if (is_array($this->validateUploadCallback)) {
+            foreach ($this->validateUploadCallback as $callback) {
+                if (!isset($callback[0]) || !class_exists($callback[0])) {
                     continue;
                 }
 
                 $objCallback = System::importStatic($callback[0]);
 
-                if (!method_exists($objCallback, $callback[1])) {
+                if (!isset($callback[1]) || !method_exists($objCallback, $callback[1])) {
                     continue;
                 }
 

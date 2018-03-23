@@ -1449,6 +1449,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         ];
 
         $attributes = Widget::getAttributesFromDca($dca, 'files');
+        $attributes['validateUploadCallback'] = [['MyClass', 'validateUpload'], [self::class, 'validateUpload'], [self::class, 'callbackFunction']];
         $formMultiFileUpload = new FormMultiFileUpload($attributes);
 
         // create new file
@@ -1554,6 +1555,41 @@ class FormMultiFileUploadTest extends ContaoTestCase
         System::setContainer($container);
 
         $this->assertSame(['error' => 'Die Breite des Bildes darf 10 Pixel nicht unterschreiten (aktuelle Bildbreite: 5 Pixel).', 'filenameOrigEncoded' => 'dataTest.csv', 'filenameSanitized' => 'datatest.csv'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
+
+        // create new file
+        file_put_contents(UNIT_TESTING_FILES.'/dataTest.csv', 'test');
+
+        // throwing invalid argument exception case
+        $uploadFile = new UploadedFile(// Path to the file to send
+            UNIT_TESTING_FILES.'/dataTest.csv', // Name of the sent file
+            'dataTest.csv', // mime type
+            'text/csv', // size of the file
+            7006, null, true);
+
+        $framework = $this->mockContaoFramework([Dbafs::class => $dbafs]);
+        $framework->method('createInstance')->willReturnCallback(function ($class, $arg) {
+            switch ($class) {
+                case File::class:
+                    $filesModel = $this->mockClassWithProperties(FilesModel::class, ['isImage' => true, 'uuid' => 'uuid']);
+                    $file = $this->mockClassWithProperties(File::class, ['isImage' => false, 'width' => 5]);
+                    $file->method('getModel')->willReturn($filesModel);
+
+                    return $file;
+                    break;
+                default:
+                    return null;
+                    break;
+            }
+        });
+        $imageUtils = $this->mockAdapter(['getPixelValue']);
+        $imageUtils->method('getPixelValue')->willReturn(10);
+
+        $container = System::getContainer();
+        $container->set('contao.framework', $framework);
+        $container->set('huh.utils.image', $imageUtils);
+        System::setContainer($container);
+
+        $this->assertSame('dataTest.csv', $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder'])['filenameOrigEncoded']);
     }
 
     /**
@@ -1562,6 +1598,17 @@ class FormMultiFileUploadTest extends ContaoTestCase
     public function getDataContainer($activeRecord = null)
     {
         return $this->mockClassWithProperties(DataContainer::class, ['table' => 'tl_files', 'activeRecord' => $activeRecord, 'id' => 12]);
+    }
+
+    /**
+     * callback function for testing.
+     *
+     * @param $file
+     * @param $class
+     */
+    public function callbackFunction($file, $class)
+    {
+        return true;
     }
 
     protected function getMethod($class, $name)

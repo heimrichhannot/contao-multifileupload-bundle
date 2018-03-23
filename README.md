@@ -39,8 +39,8 @@ Use the inputType "multifileupload" for your field. In the backend, the widget i
         ),
         'skipDeleteAfterSubmit' => true
     ),
-    'upload_path_callback' => array(array('MyClass', 'getJobUploadPath')),
-    'validate_upload_callback' => array(array('MyClass', 'validateUpload')),
+    'uploadpathCallback' => [['MyClass', 'getJobUploadPath']],
+    'validateUploadCallback' => [['MyClass', 'validateUpload']],
     'sql'       => "blob NULL",
 ),
 ```
