@@ -251,6 +251,9 @@ class FormMultiFileUpload extends Upload
         }
     }
 
+    /**
+     * @return string
+     */
     public function generateLabel()
     {
         if ('' === $this->strLabel || null === $this->strLabel) {
@@ -536,8 +539,8 @@ class FormMultiFileUpload extends Upload
      * @param UploadedFile $uploadFile   UploadedFile        The uploaded file object
      * @param string       $uploadFolder The upload target folder within contao files folder
      *
-     * @return array|bool Returns array with file information on success. Returns false if no valid file, file cannot be moved or destination lies outside the
-     *                    contao upload directory.
+     * @return array Returns array with file information on success. Returns false if no valid file, file cannot be moved or destination lies outside the
+     *               contao upload directory.
      */
     protected function uploadFile(UploadedFile $uploadFile, string $uploadFolder)
     {
