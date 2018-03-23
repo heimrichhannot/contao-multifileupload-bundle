@@ -1,9 +1,11 @@
 
-![](https://img.shields.io/packagist/v/heimrichhannot/contao-multifileupload.svg)
-![](https://img.shields.io/packagist/l/heimrichhannot/contao-multifileupload.svg)
-![](https://img.shields.io/packagist/dt/heimrichhannot/contao-multifileupload.svg)
+![](https://img.shields.io/packagist/v/heimrichhannot/contao-multifileupload-bundle.svg)
+![](https://img.shields.io/packagist/l/heimrichhannot/contao-multifileupload-bundle.svg)
+![](https://img.shields.io/packagist/dt/heimrichhannot/contao-multifileupload-bundle.svg)
+[![](https://img.shields.io/travis/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://travis-ci.org/heimrichhannot/contao-multifileupload-bundle/)
+[![](https://img.shields.io/coveralls/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://coveralls.io/github/heimrichhannot/contao-multifileupload-bundle)
 
-# Contao Multi File Upload
+# Contao Multi File Upload Bundle
 
 Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com/) functionality to both back and front end.
 The javascript is written in native javascript and invoked for both jquery and mootools on "document ready" and "ajax complete".
@@ -82,6 +84,6 @@ skipDeleteAfterSubmit | false | Prevent file removal from filesystem.
 
 Type | Arguments | Expected return value | Description
 ---- | ---- | ---- | -----------
-upload_path_callback | $strTarget, \File $objFile, \DataContainer $dc | $strTarget | Manipulate the upload path after form submission (run within onsubmit_callback).
-validate_upload_callback | \File $objFile, \Widget $objWidget | boolean(false) or string with frontend error message | Validate the uploaded file and add an error message if file does not pass validation, otherwise boolean(false) is expected.
+uploadPathCallback | $strTarget, \File $objFile, \DataContainer $dc | $strTarget | Manipulate the upload path after form submission (run within onsubmit_callback).
+validateUploadCallback | \File $objFile, \Widget $objWidget | boolean(false) or string with frontend error message | Validate the uploaded file and add an error message if file does not pass validation, otherwise boolean(false) is expected.
 
