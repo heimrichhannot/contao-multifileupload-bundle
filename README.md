@@ -8,7 +8,7 @@
 Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com/) functionality to both back and front end.
 The javascript is written in native javascript and invoked for both jquery and mootools on "document ready" and "ajax complete".
 
-![alt text](./doc/multifileupload-demo.jpg "Multifileupload demo within contao backend")
+![alt text](/doc/multifileupload-demo.jpg "Multifileupload demo within contao backend")
 
 
 ## Features
@@ -18,11 +18,11 @@ The javascript is written in native javascript and invoked for both jquery and m
 Use the inputType "multifileupload" for your field. In the backend, the widget is replaced by a "fileTree".
 
 ```
-'client_logo' => array(
+'client_logo' => [
     'label'     => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo'],
     'exclude'   => true,
     'inputType' => TL_MODE == 'BE' ? 'fileTree' : 'multifileupload',
-    'eval'      => array(
+    'eval'      => [
         'tl_class'      => 'clr',
         'extensions'    => \Config::get('validImageTypes'),
         'filesOnly'     => true,
@@ -33,21 +33,21 @@ Use the inputType "multifileupload" for your field. In the backend, the widget i
         'maxImageWidth'       => '1600px',
         'maxImageHeight'      => '1200px',
         'multipleFiles' => false,
-        'labels'        => array(
+        'labels'        => [
             'head' => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo']['messageText'][0],
             'body' => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo']['messageText'][1],
-        ),
+        ],
         'skipDeleteAfterSubmit' => true
-    ),
+    ],
     'uploadpathCallback' => [['MyClass', 'getJobUploadPath']],
     'validateUploadCallback' => [['MyClass', 'validateUpload']],
     'sql'       => "blob NULL",
-),
+],
 ```
 
 ### Flow chart
 
-A flowchart with description of the full upload procedure with callback injection can be found here: [Flowchart](./doc/upload-flow-chart.html).
+A flowchart with description of the full upload procedure with callback injection can be found here: [Flowchart](http://htmlpreview.github.io/?https://github.com/heimrichhannot/contao-multifileupload-bundle/blob/master/doc/upload-flow-chart.html).
 
 ### Eval-Properties
 

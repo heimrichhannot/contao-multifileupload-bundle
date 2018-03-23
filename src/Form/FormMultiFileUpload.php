@@ -132,9 +132,9 @@ class FormMultiFileUpload extends Upload
                 $file = new File($strPath);
                 $target = $strUploadFolder.'/'.$file->name;
 
-                // upload_path_callback
-                if (isset($arrData['upload_path_callback']) && is_array($arrData['upload_path_callback'])) {
-                    foreach ($arrData['upload_path_callback'] as $callback) {
+                // uploadPathCallback
+                if (isset($arrData['uploadPathCallback']) && is_array($arrData['uploadPathCallback'])) {
+                    foreach ($arrData['uploadPathCallback'] as $callback) {
                         $target = System::importStatic($callback[0])->{$callback[1]}($target, $file, $dc) ?: $target;
                     }
                 }
@@ -591,7 +591,7 @@ class FormMultiFileUpload extends Upload
             return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        // upload_path_callback
+        // validateUploadCallback
         if (is_array($this->validateUploadCallback)) {
             foreach ($this->validateUploadCallback as $callback) {
                 if (!isset($callback[0]) || !class_exists($callback[0])) {
