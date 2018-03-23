@@ -92,7 +92,9 @@ class FormMultiFileUpload extends Upload
      */
     public function moveFiles(DataContainer $dc)
     {
-        $arrPost = System::getContainer()->get('huh.request')->getAllPost();
+        $container = System::getContainer();
+
+        $arrPost = $container->get('huh.request')->getAllPost();
 
         foreach ($arrPost as $key => $value) {
             if (!isset($GLOBALS['TL_DCA'][$dc->table]['fields'][$key])) {
@@ -107,10 +109,10 @@ class FormMultiFileUpload extends Upload
 
             $arrFiles = deserialize($dc->activeRecord->{$key});
 
-            $strUploadFolder = System::getContainer()->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
+            $strUploadFolder = $container->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
 
             if (null === $strUploadFolder) {
-                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, System::getContainer()->getParameter('huh.multifileupload.upload_tmp')));
+                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, $container->getParameter('huh.multifileupload.upload_tmp')));
             }
 
             if (!is_array($arrFiles)) {
@@ -118,7 +120,7 @@ class FormMultiFileUpload extends Upload
             }
 
             /** @var Collection|FilesModel $filesModel */
-            $filesModel = System::getContainer()->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
+            $filesModel = $container->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
 
             if (null === $filesModel) {
                 continue;
@@ -139,19 +141,19 @@ class FormMultiFileUpload extends Upload
                     }
                 }
 
-                if (System::getContainer()->get('huh.utils.string')->startsWith($file->path, ltrim($target, '/'))) {
+                if ($container->get('huh.utils.string')->startsWith($file->path, ltrim($target, '/'))) {
                     continue;
                 }
 
-                $target = System::getContainer()->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
+                $target = $container->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
 
                 if ($file->renameTo($target)) {
                     $arrTargets[] = $target;
                     $objModel = $file->getModel();
 
                     // Update the database
-                    if (null === $objModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($target)) {
-                        $objModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($target);
+                    if (null === $objModel && $container->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($target)) {
+                        $objModel = $container->get('contao.framework')->getAdapter(Dbafs::class)->addResource($target);
                     }
 
                     continue;
@@ -178,35 +180,37 @@ class FormMultiFileUpload extends Upload
      */
     public function upload()
     {
-        $arrUuids = [];
+        $container = System::getContainer();
+        $request = $container->get('huh.request');
+        $uuids = [];
         $varReturn = null;
         // check for the request token
-        if (!System::getContainer()->get('huh.request')->hasPost('requestToken') || !\RequestToken::validate(System::getContainer()->get('huh.request')->getPost('requestToken'))) {
+        if (!$request->hasPost('requestToken') || !\RequestToken::validate($request->getPost('requestToken'))) {
             $objResponse = new ResponseError();
             $objResponse->setMessage('Invalid Request Token!');
             $objResponse->output();
         }
 
-        if (!System::getContainer()->get('huh.request')->files->has($this->name)) {
+        if (!$request->files->has($this->name)) {
             $objResponse = new ResponseError();
             $objResponse->setMessage('Invalid Request. File not found in \Symfony\Component\HttpFoundation\FileBag');
             $objResponse->output();
         }
 
-        $objTmpFolder = new Folder(System::getContainer()->getParameter('huh.multifileupload.upload_tmp'));
+        $objTmpFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists(System::getContainer()->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.System::getContainer()->getParameter('huh.multifileupload.upload_tmp'))) {
+        if (!file_exists($container->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.$container->getParameter('huh.multifileupload.upload_tmp'))) {
             $objTmpFolder->unprotect();
             $command = new SymlinksCommand();
-            $command->setContainer(System::getContainer());
+            $command->setContainer($container);
             $input = new ArrayInput([]);
             $output = new NullOutput();
             $command->run($input, $output);
         }
 
         $strField = $this->name;
-        $varFile = System::getContainer()->get('huh.request')->files->get($strField);
+        $varFile = $request->files->get($strField);
         // Multi-files upload at once
         if (is_array($varFile)) {
             // prevent disk flooding
@@ -224,7 +228,7 @@ class FormMultiFileUpload extends Upload
                 $varReturn[] = $arrFile;
 
                 if (isset($varReturn['uuid']) && Validator::isUuid($arrFile['uuid'])) {
-                    $arrUuids[] = $arrFile['uuid'];
+                    $uuids[] = $arrFile['uuid'];
                 }
             }
         } else {
@@ -232,12 +236,12 @@ class FormMultiFileUpload extends Upload
             $varReturn = $this->uploadFile($varFile, $objTmpFolder->path);
 
             if (isset($varReturn['uuid']) && Validator::isUuid($varReturn['uuid'])) {
-                $arrUuids[] = $varReturn['uuid'];
+                $uuids[] = $varReturn['uuid'];
             }
         }
 
         if (null !== $varReturn) {
-            $this->varValue = $arrUuids;
+            $this->varValue = $uuids;
             $objResponse = new ResponseSuccess();
             $objResult = new ResponseData();
             $objResult->setData($varReturn);
@@ -537,9 +541,10 @@ class FormMultiFileUpload extends Upload
      */
     protected function uploadFile(UploadedFile $uploadFile, string $uploadFolder)
     {
+        $container = System::getContainer();
         $originalFileName = rawurldecode($uploadFile->getClientOriginalName()); // e.g. double quotes are escaped with %22 -> decode it
         $originalFileNameEncoded = rawurlencode($originalFileName);
-        $sanitizeFileName = System::getContainer()->get('huh.utils.file')->sanitizeFileName($uploadFile->getClientOriginalName());
+        $sanitizeFileName = $container->get('huh.utils.file')->sanitizeFileName($uploadFile->getClientOriginalName());
 
         if ($uploadFile->getError()) {
             return $this->prepareErrorArray($uploadFile->getError(), $originalFileNameEncoded, $sanitizeFileName);
@@ -550,7 +555,7 @@ class FormMultiFileUpload extends Upload
             return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        $targetFileName = System::getContainer()->get('huh.utils.file')->addUniqueIdToFilename($sanitizeFileName, static::UNIQID_PREFIX);
+        $targetFileName = $container->get('huh.utils.file')->addUniqueIdToFilename($sanitizeFileName, static::UNIQID_PREFIX);
         try {
             $uploadFile = $uploadFile->move(TL_ROOT.'/'.$uploadFolder, $targetFileName);
         } catch (FileException $e) {
@@ -564,12 +569,12 @@ class FormMultiFileUpload extends Upload
 
         try {
             // add db record
-            $file = System::getContainer()->get('contao.framework')->createInstance(File::class, [$relativePath]);
+            $file = $container->get('contao.framework')->createInstance(File::class, [$relativePath]);
             $fileModel = $file->getModel();
 
             // Update the database
-            if (null === $fileModel && System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($relativePath)) {
-                $fileModel = System::getContainer()->get('contao.framework')->getAdapter(Dbafs::class)->addResource($relativePath);
+            if (null === $fileModel && $container->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($relativePath)) {
+                $fileModel = $container->get('contao.framework')->getAdapter(Dbafs::class)->addResource($relativePath);
             }
 
             if (!$file instanceof File || null === $fileModel) {

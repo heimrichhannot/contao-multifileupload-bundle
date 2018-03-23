@@ -31,12 +31,14 @@ class BackendMultiFileUpload extends FormMultiFileUpload
         if ($strAction !== $this->uploadAction) {
             return false;
         }
+        $container = System::getContainer();
+        $request = $container->get('huh.request');
 
-        $fields = System::getContainer()->get('session')->get(MultiFileUpload::SESSION_FIELD_KEY);
+        $fields = $container->get('session')->get(MultiFileUpload::SESSION_FIELD_KEY);
 
         // Check whether the field is allowed for regular users
-        if (!isset($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')]) || (!isset($fields[$dc->table]['fields'][System::getContainer()->get('huh.request')->getPost('field')]['exclude']) && !BackendUser::getInstance()->hasAccess($dc->table.'::'.System::getContainer()->get('huh.request')->getPost('field'), 'alexf'))) {
-            System::getContainer()->get('monolog.logger.contao')->log('Field "'.System::getContainer()->get('huh.request')->getPost('field').'" is not an allowed selector field (possible SQL injection attempt)', __METHOD__, TL_ERROR);
+        if (!isset($fields[$dc->table][$request->getPost('field')]) || (!isset($fields[$dc->table]['fields'][$request->getPost('field')]['exclude']) && !BackendUser::getInstance()->hasAccess($dc->table.'::'.$request->getPost('field'), 'alexf'))) {
+            $container->get('monolog.logger.contao')->log('Field "'.$request->getPost('field').'" is not an allowed selector field (possible SQL injection attempt)', __METHOD__, TL_ERROR);
 
             $objResponse = new ResponseError();
             $objResponse->setMessage('Bad Request');
@@ -44,11 +46,11 @@ class BackendMultiFileUpload extends FormMultiFileUpload
         }
 
         if (null === $dc->activeRecord) {
-            $dc->activeRecord = System::getContainer()->get('huh.utils.model')->findModelInstancesBy($dc->table, ['id'], [$dc->id]);
+            $dc->activeRecord = $container->get('huh.utils.model')->findModelInstancesBy($dc->table, ['id'], [$dc->id]);
         }
 
         // add dca attributes and instantiate current object to set widget attributes
-        $arrAttributes = System::getContainer()->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][System::getContainer()->get('huh.request')->getPost('field')], System::getContainer()->get('huh.request')->getPost('field'));
+        $arrAttributes = $container->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][$request->getPost('field')], $request->getPost('field'));
         $objUploader = new self($arrAttributes);
         $objResponse = $objUploader->upload();
 
