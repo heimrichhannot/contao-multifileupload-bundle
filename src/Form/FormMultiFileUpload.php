@@ -107,7 +107,7 @@ class FormMultiFileUpload extends Upload
                 continue;
             }
 
-            $arrFiles = deserialize($dc->activeRecord->{$key});
+            $arrFiles = StringUtil::deserialize($dc->activeRecord->{$key});
 
             $strUploadFolder = $container->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
 
@@ -447,7 +447,7 @@ class FormMultiFileUpload extends Upload
     {
         $error = false;
 
-        $strAllowed = $this->extensions ?: \Config::get('uploadTypes');
+        $strAllowed = $this->extensions ?: Config::get('uploadTypes');
 
         $arrAllowed = StringUtil::trimsplit(',', $strAllowed);
 

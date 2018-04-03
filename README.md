@@ -26,7 +26,7 @@ Use the inputType "multifileupload" for your field. In the backend, the widget i
     'inputType' => TL_MODE == 'BE' ? 'fileTree' : 'multifileupload',
     'eval'      => [
         'tl_class'      => 'clr',
-        'extensions'    => \Config::get('validImageTypes'),
+        'extensions'    => Config::get('validImageTypes'),
         'filesOnly'     => true,
         'fieldType'     => 'radio',
         'addRemoveLinks' => true,
@@ -41,7 +41,7 @@ Use the inputType "multifileupload" for your field. In the backend, the widget i
         ],
         'skipDeleteAfterSubmit' => true
     ],
-    'uploadpathCallback' => [['MyClass', 'getJobUploadPath']],
+    'uploadPathCallback' => [['MyClass', 'getJobUploadPath']],
     'validateUploadCallback' => [['MyClass', 'validateUpload']],
     'sql'       => "blob NULL",
 ],
@@ -63,10 +63,10 @@ maxUploadSize | minimum of $GLOBALS['TL_CONFIG']['maxFileSize'] and php.ini 'upl
 maxFiles | 10 | The maximum file count per field
 uploadFolder | null | The upload folder as String, e.g. "files/uploads", function or array. **(must be declared !!!)**, required to move files to correct destination after submission.
 addRemoveLinks | true | Remove links are added to each of the file avatars in the jquery (caption can be overwritten within language files)
-minImageWidth | 0 | The minimum image width. Set to 0 for no min width image validation. All units from \Image::getPixelValue() are supported.
-minImageHeight | 0 | The minimum image height. Set to 0 for no min height image validation. All units from \Image::getPixelValue() are supported.
-maxImageWidth | 0 | The maximum image width. Set to 0 for no max width image validation. All units from \Image::getPixelValue() are supported.
-maxImageHeight | 0 | The maximum image height. Set to 0 for no max image height validation. All units from \Image::getPixelValue() are supported.
+minImageWidth | 0 | The minimum image width. Set to 0 for no min width image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
+minImageHeight | 0 | The minimum image height. Set to 0 for no min height image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
+maxImageWidth | 0 | The maximum image width. Set to 0 for no max width image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
+maxImageHeight | 0 | The maximum image height. Set to 0 for no max image height validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
 minImageWidthErrorText | $GLOBALS['TL_LANG']['ERR']['minWidth'] | Custom error message for minimum image width. (arguments provided: 1 - minimum width from config, 2 - current image width)
 minImageHeightErrorText | $GLOBALS['TL_LANG']['ERR']['minHeight'] | Custom error message for minimum image height. (arguments provided: 1 - minimum height from config, 2 - current image height)
 maxImageWidthErrorText | $GLOBALS['TL_LANG']['ERR']['maxWidth'] | Custom error message for maximum image width. (arguments provided: 1 - maximum width from config, 2 - current image width)

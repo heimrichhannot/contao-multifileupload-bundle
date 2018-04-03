@@ -317,7 +317,7 @@ class MultiFileUpload extends FileUpload
     protected function getMaximumUploadSize($maxUploadSize = null)
     {
         $intMaxUploadSizeDca = $this->getByteSize($maxUploadSize ?: 0);
-        $intMaxUploadSizeSettings = $this->getByteSize(\Config::get('maxFileSize') ?: 0);
+        $intMaxUploadSizeSettings = $this->getByteSize(Config::get('maxFileSize') ?: 0);
         $intMaxUploadSizePhp = $this->getByteSize(ini_get('upload_max_filesize'));
 
         $strError = null;
