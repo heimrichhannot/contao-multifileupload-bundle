@@ -323,13 +323,13 @@ class MultiFileUpload extends FileUpload
         $strError = null;
 
         if ($intMaxUploadSizeDca > $intMaxUploadSizeSettings) {
-            $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' exceeds the limit in tl_settings.';
+            $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' ('.$intMaxUploadSizeDca.' Bytes) exceeds the limit in tl_settings ('.$intMaxUploadSizeSettings.' Bytes)';
         } else {
             if ($intMaxUploadSizeDca > $intMaxUploadSizePhp) {
-                $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' exceeds the limit in php.ini.';
+                $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' ('.$intMaxUploadSizeDca.' Bytes) exceeds the limit in php.ini ('.$intMaxUploadSizePhp.' Bytes).';
             } else {
                 if ($intMaxUploadSizeSettings > $intMaxUploadSizePhp) {
-                    $strError = 'The maximum upload size you defined in tl_settings exceeds the limit in php.ini.';
+                    $strError = 'The maximum upload size you defined in tl_settings ('.$intMaxUploadSizeSettings.' Bytes) exceeds the limit in php.ini ('.$intMaxUploadSizePhp.' Bytes).';
                 }
             }
         }
