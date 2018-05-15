@@ -381,6 +381,8 @@ class FormMultiFileUpload extends Upload
 
         $attributes['addRemoveLinks'] = isset($attributes['addRemoveLinks']) ? $attributes['addRemoveLinks'] : true;
 
+        $attributes['timeout'] = (int) (isset($attributes['timeout']) ? $attributes['timeout'] : (ini_get('max_execution_time') ?: 120)) * 1000;
+
         if (isset($attributes['value']) && !is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
             $attributes['value'] = json_decode($attributes['value']);
         }
