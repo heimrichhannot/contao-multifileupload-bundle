@@ -18,7 +18,8 @@
     "symfony/framework-bundle": "^3.4",
     "heimrichhannot/dropzone-latest": "^5.0",
     "heimrichhannot/contao-ajax-bundle": "^1.0",
-    "heimrichhannot/contao-components": "^2.0"
+    "heimrichhannot/contao-components": "^2.0",
+    "heimrichhannot/contao-encore-bundle": "dev-master"
   },
   "require-dev": {
     "contao/test-case": "^1.1",
