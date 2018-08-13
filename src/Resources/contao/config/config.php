@@ -40,24 +40,24 @@ $GLOBALS['AJAX'][\HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload::
 $GLOBALS['TL_COMPONENTS']['multifileupload'] = [
     'js'  => [
         'assets/dropzone-latest/dist/min/dropzone.min.js|static',
-        'system/modules/multifileupload/assets/js/multifileupload.min.js|static',
+        'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static',
     ],
     'css' => [
-        'system/modules/multifileupload/assets/css/dropzone.min.css|screen|static',
+        'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static',
     ],
 ];
 
-if (TL_MODE == 'FE') {
-    $GLOBALS['TL_CSS']['dropzone'] = 'system/modules/multifileupload/assets/css/dropzone.min.css|screen|static';
+if (\Contao\System::getContainer()->get('huh.utils.container')->isFrontend()) {
+    $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static';
 
     $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/min/dropzone.min.js|static';
-    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'system/modules/multifileupload/assets/js/multifileupload.min.js|static';
+    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static';
 }
 
-if (TL_MODE == 'BE' && \Input::get('do') != 'files') {
+if (\Contao\System::getContainer()->get('huh.utils.container')->isBackend() && 'files' != \Contao\System::getContainer()->get('huh.request')->getGet('do')) {
 
-    $GLOBALS['TL_CSS']['dropzone'] = 'system/modules/multifileupload/assets/css/dropzone.min.css|screen|static';
+    $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static';
 
     $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/min/dropzone.min.js|static';
-    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'system/modules/multifileupload/assets/js/multifileupload.min.js';
+    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static';
 }

@@ -26,9 +26,9 @@ class BackendMultiFileUpload extends FormMultiFileUpload
         parent::__construct($attributes);
     }
 
-    public function executePostActionsHook($strAction, DataContainer $dc)
+    public function executePostActionsHook(string $action, DataContainer $dc)
     {
-        if ($strAction !== $this->uploadAction) {
+        if ($action !== $this->uploadAction) {
             return false;
         }
         $container = System::getContainer();
@@ -46,12 +46,12 @@ class BackendMultiFileUpload extends FormMultiFileUpload
         }
 
         if (null === $dc->activeRecord) {
-            $dc->activeRecord = $container->get('huh.utils.model')->findModelInstancesBy($dc->table, ['id'], [$dc->id]);
+            $dc->activeRecord = $container->get('huh.utils.model')->findModelInstancesBy($dc->table, [$dc->table.'.id'], [$dc->id]);
         }
 
         // add dca attributes and instantiate current object to set widget attributes
-        $arrAttributes = $container->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][$request->getPost('field')], $request->getPost('field'));
-        $objUploader = new self($arrAttributes);
+        $attributes = $container->get('contao.framework')->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][$request->getPost('field')], $request->getPost('field'));
+        $objUploader = new self($attributes);
         $objResponse = $objUploader->upload();
 
         /* @var Response */

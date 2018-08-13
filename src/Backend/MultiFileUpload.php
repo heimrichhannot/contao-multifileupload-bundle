@@ -63,7 +63,7 @@ class MultiFileUpload extends FileUpload
         $file = System::getContainer()->get('huh.request')->getGet('file', true);
 
         // Send the file to the browser
-        if ('' !== $file) {
+        if ('' !== $file && !empty($file)) {
             if (!$this->isAllowedDownload($file)) {
                 header('HTTP/1.1 403 Forbidden');
                 die('No file access.');

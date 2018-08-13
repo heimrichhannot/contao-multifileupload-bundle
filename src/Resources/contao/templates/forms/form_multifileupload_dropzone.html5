@@ -1,7 +1,7 @@
 <?php $this->extend('form_row'); ?>
 <?php $this->block('label'); ?>
 <?php // in backend mode labels will be generated different (H3) ?>
-<?php if ($this->label && !$this->hideLabel && TL_MODE == 'FE' && !in_array('bootstrapper', System::getContainer()->getParameter('kernel.bundles'))): ?>
+<?php if ($this->label && !$this->hideLabel && \Contao\System::getContainer()->get('huh.utils.container')->isFrontend() && !in_array('bootstrapper', array_keys(System::getContainer()->getParameter('kernel.bundles')))): ?>
     <label style="font-weight: bold;" for="ctrl_<?= $this->id; ?>"<?php if ($this->class): ?> class="<?= $this->class; ?>"<?php endif; ?>>
         <?php if ($this->mandatory): ?>
             <span class="invisible"><?= $this->mandatoryField; ?></span> <?= $this->label; ?><span class="mandatory">*</span>
@@ -13,24 +13,24 @@
 <?php $this->endblock(); ?>
 
 <?php $this->block('field'); ?>
-<div <?= $this->attributes; ?> class="multifileupload dropzone<?= $this->class ? ' ' . $this->class : ''; ?>" id="ctrl_<?= $this->id; ?>">
-    <input type="hidden" name="formattedInitial_<?= $this->id ?>" value='<?= $this->initialFilesFormatted ?: '[]' ?>'>
-    <input type="hidden" name="uploaded_<?= $this->id ?>" value='[]'>
-    <input type="hidden" name="deleted_<?= $this->id ?>" value='[]'>
-    <input type="hidden" name="<?= $this->id ?>" value='<?= $this->initialFiles ?: '[]' ?>'>
-    <div class="fallback">
-        <input type="file" name="<?= $this->name; ?><?php if ($this->uploadMultiple): ?>[]<?php endif; ?>"<?php if ($this->uploadMultiple): ?> multiple<?php endif; ?>>
-    </div>
-    <div class="dz-container">
-        <div class="dz-default dz-message">
-            <span class="dz-message-head"><?= $this->labels['head']; ?></span>
-            <span class="dz-message-body"><?= $this->labels['body']; ?></span>
-            <span class="dz-message-foot"><?= $this->labels['foot']; ?></span>
+    <div <?= $this->attributes; ?> class="multifileupload dropzone<?= $this->class ? ' ' . $this->class : ''; ?>" id="ctrl_<?= $this->id; ?>">
+        <input type="hidden" name="formattedInitial_<?= $this->id ?>" value='<?= $this->initialFilesFormatted ?: '[]' ?>'>
+        <input type="hidden" name="uploaded_<?= $this->id ?>" value='[]'>
+        <input type="hidden" name="deleted_<?= $this->id ?>" value='[]'>
+        <input type="hidden" name="<?= $this->id ?>" value='<?= $this->initialFiles ?: '[]' ?>'>
+        <div class="fallback">
+            <input type="file" name="<?= $this->name; ?><?php if ($this->uploadMultiple): ?>[]<?php endif; ?>"<?php if ($this->uploadMultiple): ?> multiple<?php endif; ?>>
         </div>
-        <div class="dropzone-previews"></div>
+        <div class="dz-container">
+            <div class="dz-default dz-message">
+                <span class="dz-message-head"><?= $this->labels['head']; ?></span>
+                <span class="dz-message-body"><?= $this->labels['body']; ?></span>
+                <span class="dz-message-foot"><?= $this->labels['foot']; ?></span>
+            </div>
+            <div class="dropzone-previews"></div>
+        </div>
     </div>
-</div>
-<?php if (!in_array('bootstrapper', System::getContainer()->getParameter('kernel.bundles'))): ?>
+<?php if (!in_array('bootstrapper', array_keys(System::getContainer()->getParameter('kernel.bundles')))): ?>
     <?php if ($this->explanation): ?>
         <div class="explanation">
             <?= $this->explanation ?>

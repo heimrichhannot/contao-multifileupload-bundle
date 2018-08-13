@@ -1,0 +1,8 @@
+{
+  "name": "contao-multifileupload-bundle",
+  "version": "1.0.0",
+  "licence": "LGPL-3.0-or-later",
+  "dependencies": {
+    "dropzone": "^5.5.1"
+  }
+}

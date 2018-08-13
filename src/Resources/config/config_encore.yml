@@ -1,0 +1,8 @@
+huh:
+    encore:
+        entries:
+            - { name: contao-multifileupload-bundle, file: 'vendor/heimrichhannot/contao-multifileupload-bundle/src/Resources/public/js/jquery.multifileupload-bundle.es6.js', requiresCss: true }
+        legacy:
+            js:
+              - multifileupload
+              - dropzone

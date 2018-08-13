@@ -8,6 +8,7 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
+use Contao\Config;
 use Contao\CoreBundle\Command\SymlinksCommand;
 use Contao\Database;
 use Contao\DataContainer;
@@ -192,9 +193,7 @@ class FormMultiFileUpload extends Upload
         }
 
         if (!$request->files->has($this->name)) {
-            $objResponse = new ResponseError();
-            $objResponse->setMessage('Invalid Request. File not found in \Symfony\Component\HttpFoundation\FileBag');
-            $objResponse->output();
+            return;
         }
 
         $objTmpFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
@@ -367,7 +366,7 @@ class FormMultiFileUpload extends Upload
      */
     public function setAttributes(array $attributes)
     {
-        if (isset($attributes['strTable'])) {
+        if (isset($attributes['strTable']) && '' !== $attributes['strTable']) {
             $this->isSingleFile($attributes);
         }
 
@@ -508,7 +507,7 @@ class FormMultiFileUpload extends Upload
      */
     protected function validateUpload(File $file)
     {
-        if ($file->isImage) {
+        if ($file->isImage && null !== $this->minImageWidth && null !== $this->minImageHeight && null !== $this->maxImageWidth && null !== $this->maxImageHeight) {
             $minWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageWidth);
             $minHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageHeight);
 

@@ -54,6 +54,7 @@
     "preferred-install": "dist"
   },
   "extra": {
-    "contao-manager-plugin": "HeimrichHannot\\MultiFileUploadBundle\\ContaoManager\\Plugin"
+    "contao-manager-plugin": "HeimrichHannot\\MultiFileUploadBundle\\ContaoManager\\Plugin",
+    "foxy": true
   }
 }
