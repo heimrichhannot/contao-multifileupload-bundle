@@ -339,7 +339,7 @@ class MultiFileUpload extends FileUpload
             if (System::getContainer()->get('huh.utils.container')->isBackend() && System::getContainer()->get('contao.framework')->createInstance(BackendUser::class)->isAdmin) {
                 throw new \Exception($strError);
             }
-            System::getContainer()->get('monolog.logger.contao')->log($strError, __METHOD__, TL_ERROR);
+            System::getContainer()->get('monolog.logger.contao')->log(TL_ERROR, $strError);
         }
 
         if (!$intMaxUploadSizeDca && !$intMaxUploadSizeSettings) {
