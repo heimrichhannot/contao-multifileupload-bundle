@@ -384,7 +384,13 @@ class MultiFileUpload extends FileUpload
         $this->previewsContainer = '#ctrl_'.$this->id.' .dropzone-previews';
 
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
-        $this->maxFiles = ($this->uploadMultiple ? ($this->maxFiles ?: System::getContainer()->getParameter('huh.multifileupload.maxfilesdefault')) : 1);
+
+        $maxFilesDefault = 1;
+        if (System::getContainer()->hasParameter('huh.multifileupload.maxfilesdefault')) {
+            $maxFilesDefault = System::getContainer()->getParameter('huh.multifileupload.maxfilesdefault');
+        }
+
+        $this->maxFiles = ($this->uploadMultiple ? ($this->maxFiles ?: $maxFilesDefault) : 1);
     }
 
     /**

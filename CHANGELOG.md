@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2018-09-05
+
+### Fixed
+
+- MultiFileUpload::loadDcaConfig()
+
 ## [1.0.4] - 2018-08-27
 
 ### Fixed
