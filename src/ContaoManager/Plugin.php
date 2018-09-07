@@ -21,15 +21,15 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface
 {
     public function getBundles(ParserInterface $parser)
     {
-        $bundles = [
-            BundleConfig::create(HeimrichHannotContaoMultiFileUploadBundle::class)->setLoadAfter([ContaoCoreBundle::class]),
-        ];
+        $loadAfter = [ContaoCoreBundle::class];
 
-        if (file_exists($GLOBALS['kernel']->getProjectDir().'/vendor/heimrichhannot/contao-multifileupload/classes/MultiFileUpload.php')) {
-            $bundles = [
-                BundleConfig::create(HeimrichHannotContaoMultiFileUploadBundle::class)->setLoadAfter([ContaoCoreBundle::class, 'multifileupload']),
-            ];
+        if (file_exists(__DIR__.'/../../../contao-multifileupload/classes/MultiFileUpload.php')) {
+            $loadAfter[] = 'multifileupload';
         }
+
+        $bundles = [
+            BundleConfig::create(HeimrichHannotContaoMultiFileUploadBundle::class)->setLoadAfter($loadAfter),
+        ];
 
         return $bundles;
     }

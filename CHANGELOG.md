@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2018-09-07
+
+### Fixed
+
+- Server error 500 while trying to warmup cache due to `Uncaught Error: Call to undefined method Contao\\ManagerBundle\\HttpKernel\\ContaoCache::getProjectDir() ` in `Plugin::getBundles`
+
 ## [1.0.6] - 2018-09-07
 
 ### Fixed
