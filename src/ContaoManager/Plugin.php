@@ -46,7 +46,7 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface
     public function getExtensionConfig($extensionName, array $extensionConfigs, ContainerBuilder $container)
     {
         if (in_array('HeimrichHannot\EncoreBundle\HeimrichHannotContaoEncoreBundle', $container->getParameter('kernel.bundles'), true)) {
-            return ContainerUtil::mergeConfigFile('huh_encore', $extensionName, $extensionConfigs, $container->getParameter('kernel.project_dir').'/vendor/heimrichhannot/contao-multifileupload-bundle/src/Resources/config/config_encore.yml');
+            return ContainerUtil::mergeConfigFile('huh_encore', $extensionName, $extensionConfigs, __DIR__.'/../Resources/config/config_encore.yml');
         }
     }
 }

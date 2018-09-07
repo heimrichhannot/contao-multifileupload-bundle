@@ -199,7 +199,7 @@ class FormMultiFileUpload extends Upload
         $objTmpFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists($container->getParameter('contao.web_dir').DIRECTORY_SEPARATOR.$container->getParameter('huh.multifileupload.upload_tmp'))) {
+        if (!file_exists($container->getParameter('contao.web_dir').\DIRECTORY_SEPARATOR.$container->getParameter('huh.multifileupload.upload_tmp'))) {
             $objTmpFolder->unprotect();
             $command = new SymlinksCommand();
             $command->setContainer($container);
@@ -566,7 +566,7 @@ class FormMultiFileUpload extends Upload
             return $this->prepareErrorArray(sprintf($GLOBALS['TL_LANG']['ERR']['moveUploadFile'], $e->getMessage()), $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        $relativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getRealPath()), DIRECTORY_SEPARATOR);
+        $relativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getRealPath()), \DIRECTORY_SEPARATOR);
 
         $file = null;
         $fileModel = null;
