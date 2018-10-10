@@ -63,7 +63,7 @@ class MultiFileUpload extends FileUpload
         $file = System::getContainer()->get('huh.request')->getGet('file', true);
 
         // Send the file to the browser
-        if ('' !== $file && !empty($file)) {
+        if (!empty($file)) {
             if (!$this->isAllowedDownload($file)) {
                 header('HTTP/1.1 403 Forbidden');
                 die('No file access.');
@@ -386,8 +386,8 @@ class MultiFileUpload extends FileUpload
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
 
         $maxFilesDefault = 1;
-        if (System::getContainer()->hasParameter('huh.multifileupload.maxfilesdefault')) {
-            $maxFilesDefault = System::getContainer()->getParameter('huh.multifileupload.maxfilesdefault');
+        if (System::getContainer()->hasParameter('huh.multifileupload.max_files_default')) {
+            $maxFilesDefault = System::getContainer()->getParameter('huh.multifileupload.max_files_default');
         }
 
         $this->maxFiles = ($this->uploadMultiple ? ($this->maxFiles ?: $maxFilesDefault) : 1);

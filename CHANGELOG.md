@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2018-10-10
+
+### Fixed
+- fixed wrong parameter
+- fixed error with empty file check
+- removed hard encore-bundle dependency
+
 ## [1.0.7] - 2018-09-07
 
 ### Fixed

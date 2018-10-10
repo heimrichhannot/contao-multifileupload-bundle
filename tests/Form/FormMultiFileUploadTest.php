@@ -1486,7 +1486,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         System::setContainer($container);
 
         $this->assertSame(['error' => 'Speicherziel liegt außerhalb des Contao-Upload-Verzeichnisses.', 'filenameOrigEncoded' => 'dataTest.csv', 'filenameSanitized' => 'datatest.csv'], $function->invokeArgs($formMultiFileUpload, [$uploadFile, 'folder']));
-        $this->assertFalse(file_exists(UNIT_TESTING_FILES.'/dataTest.csv'));
+        $this->assertFileNotExists(UNIT_TESTING_FILES.'/dataTest.csv');
         // create new file
         file_put_contents(UNIT_TESTING_FILES.'/dataTest.csv', 'test');
 
