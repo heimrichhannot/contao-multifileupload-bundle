@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2018-10-12
+
+### Fixed
+- trigger `__submitOnChange` only if multiple files can be uploaded on removed file 
+
 ## [1.0.8] - 2018-10-10
 
 ### Fixed

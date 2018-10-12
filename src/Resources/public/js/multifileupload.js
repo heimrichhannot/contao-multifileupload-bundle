@@ -115,7 +115,7 @@ var MultiFileUpload,
                     }
 
                     // submitOnChange support for multiple files only
-                    if (this.options.maxFiles !== 1) {
+                    if (this.options.maxFiles > 1) {
                         __submitOnChange(this, this.options.onchange);
                     }
                 }
