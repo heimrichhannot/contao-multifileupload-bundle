@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.10] - 2018-10-16
+
+### Fixed
+- compile error when encore bundle not installed
+
 ## [1.0.9] - 2018-10-12
 
 ### Fixed
