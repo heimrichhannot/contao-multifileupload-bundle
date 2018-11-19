@@ -314,7 +314,7 @@ class MultiFileUpload extends FileUpload
      *
      * @return mixed
      */
-    protected function getMaximumUploadSize($maxUploadSize = null)
+    protected function getMaximumUploadFileSize($maxUploadSize = null)
     {
         $intMaxUploadSizeDca = $this->getByteSize($maxUploadSize ?: 0);
         $intMaxUploadSizeSettings = $this->getByteSize(Config::get('maxFileSize') ?: 0);
@@ -356,7 +356,7 @@ class MultiFileUpload extends FileUpload
     protected function loadDcaConfig()
     {
         // in MiB
-        $this->maxFilesize = round(($this->getMaximumUploadSize($this->maxUploadSize) / 1024 / 1024), 2);
+        $this->maxFilesize = round(($this->getMaximumUploadFileSize($this->maxUploadSize) / 1024 / 1024), 2);
 
         $this->acceptedFiles = implode(',', array_map(function ($a) {
             return '.'.$a;

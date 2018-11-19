@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2018-11-19
+
+### Fixed
+- symfony 4.x and contao 4.6+ compatibility
+
 ## [1.0.10] - 2018-10-16
 
 ### Fixed

@@ -326,7 +326,7 @@ class MultiFileUploadTest extends ContaoTestCase
         }
     }
 
-    public function testGetMaximumUploadSize()
+    public function testGetMaximumUploadFileSize()
     {
         $arrDca = [
             'label' => 'label',
@@ -339,7 +339,7 @@ class MultiFileUploadTest extends ContaoTestCase
         ];
         $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
         $class = new MultiFileUpload($arrAttributes);
-        $function = $this->getMethod(MultiFileUpload::class, 'getMaximumUploadSize');
+        $function = $this->getMethod(MultiFileUpload::class, 'getMaximumUploadFileSize');
         $result = $function->invokeArgs($class, []);
         $this->assertSame(2048000, $result);
     }
