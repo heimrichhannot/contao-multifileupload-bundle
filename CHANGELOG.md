@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2018-12-11
+
+### Fixed
+- frontend output
+
 ## [1.0.11] - 2018-11-19
 
 ### Fixed

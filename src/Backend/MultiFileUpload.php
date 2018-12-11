@@ -145,6 +145,9 @@ class MultiFileUpload extends FileUpload
         $objT->deletedFiles = '[]';
         $objT->attributes = $this->getAttributes($this->getDropZoneOptions());
         $objT->widget = $this->widget;
+        $objT->name = $this->widget->name;
+        $objT->class = $objT->class.' '.$this->widget->name;
+        $objT->class = trim($objT->class);
 
         // store in session to validate on upload that field is allowed by user
         $fields = System::getContainer()->get('session')->get(static::SESSION_FIELD_KEY);
