@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2018-12-11
+
+### Fixed
+- error in file upload
+- php cs fixer config
+
 ## [1.0.12] - 2018-12-11
 
 ### Fixed

@@ -9,7 +9,6 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
 use Contao\Config;
-use Contao\CoreBundle\Command\SymlinksCommand;
 use Contao\Database;
 use Contao\DataContainer;
 use Contao\Dbafs;
@@ -52,9 +51,12 @@ class FormMultiFileUpload extends Upload
      * @var bool
      */
     protected $singleFile = false;
+    protected $container;
 
     public function __construct($attributes = null)
     {
+        $this->container = System::getContainer();
+
         // this is the case for 'onsubmit_callback' => 'multifileupload_moveFiles'
         if (null === $attributes) {
             $attributes = [];
@@ -83,7 +85,7 @@ class FormMultiFileUpload extends Upload
             }
         }
 
-        System::getContainer()->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
+        $this->container->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
     }
 
     /**
@@ -95,7 +97,7 @@ class FormMultiFileUpload extends Upload
     {
         $container = System::getContainer();
 
-        $arrPost = $container->get('huh.request')->getAllPost();
+        $arrPost = $this->container->get('huh.request')->getAllPost();
 
         foreach ($arrPost as $key => $value) {
             if (!isset($GLOBALS['TL_DCA'][$dc->table]['fields'][$key])) {
@@ -110,7 +112,7 @@ class FormMultiFileUpload extends Upload
 
             $arrFiles = StringUtil::deserialize($dc->activeRecord->{$key});
 
-            $strUploadFolder = $container->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
+            $strUploadFolder = $this->container->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
 
             if (null === $strUploadFolder) {
                 throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, $container->getParameter('huh.multifileupload.upload_tmp')));
@@ -199,13 +201,14 @@ class FormMultiFileUpload extends Upload
         $objTmpFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists($container->getParameter('contao.web_dir').\DIRECTORY_SEPARATOR.$container->getParameter('huh.multifileupload.upload_tmp'))) {
+        if (!file_exists($this->container->getParameter('contao.web_dir')
+            .\DIRECTORY_SEPARATOR
+            .$this->container->getParameter('huh.multifileupload.upload_tmp'))
+        ) {
             $objTmpFolder->unprotect();
-            $command = new SymlinksCommand();
-            $command->setContainer($container);
             $input = new ArrayInput([]);
             $output = new NullOutput();
-            $command->run($input, $output);
+            $this->container->get('contao.command.symlinks')->run($input, $output);
         }
 
         $strField = $this->name;
@@ -452,9 +455,9 @@ class FormMultiFileUpload extends Upload
 
         $arrAllowed = StringUtil::trimsplit(',', $strAllowed);
 
-        $strExtension = $objUploadFile->getClientOriginalExtension();
+        $strExtension = strtolower($objUploadFile->getClientOriginalExtension());
 
-        if (!$strExtension || !is_array($arrAllowed) || !in_array($strExtension, $arrAllowed, true)) {
+        if (!$strExtension || !is_array($arrAllowed) || !in_array($strExtension, $arrAllowed)) {
             return sprintf(sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $strExtension));
         }
 
