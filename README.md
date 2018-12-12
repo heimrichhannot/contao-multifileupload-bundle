@@ -78,6 +78,7 @@ thumbnailWidth | 90 | The thumbnail width (in px) of the uploaded file preview w
 thumbnailHeight | 90 | The thumbnail height (in px) of the uploaded file preview within the dropzone preview container.
 labels | array() | Overwrite the head and body labels within the upload field.
 skipDeleteAfterSubmit | false | Prevent file removal from filesystem.
+hideLabel | false | Hide widget label (Frontend)
 
 
 ### Field Callbacks

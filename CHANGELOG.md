@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2018-12-12
+
+#### Changed
+- switched `heimrichhannot/dropzone-latest` for `heimrichhannot-contao-components/dropzone-latest`
+- refactored `executePostActionsHook` into `HookListener` class
+
+#### Fixed
+- template label output
+
 ## [1.0.13] - 2018-12-11
 
 ### Fixed

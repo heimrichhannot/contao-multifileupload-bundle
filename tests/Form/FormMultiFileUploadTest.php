@@ -70,12 +70,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
     {
         global $objPage;
 
-        if (!defined('TL_MODE')) {
-            define('TL_MODE', 'FE');
+        if (!\defined('TL_MODE')) {
+            \define('TL_MODE', 'FE');
         }
 
-        if (!defined('UNIT_TESTING')) {
-            define('UNIT_TESTING', true);
+        if (!\defined('UNIT_TESTING')) {
+            \define('UNIT_TESTING', true);
         }
 
         $objPage = $this->mockClassWithProperties(PageModel::class, ['outputFormat' => 'html5']);
@@ -257,6 +257,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $this->assertSame(['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']], $GLOBALS['TL_DCA']['tl_files']['config']['onsubmit_callback']);
 
         $GLOBALS['TL_LANG']['ERR']['noUploadFolderDeclared'] = 'Kein "uploadFolder" für das Feld "%s" in eval angegeben.';
+
         try {
             $class = new FormMultiFileUpload([]);
         } catch (\Exception $e) {
@@ -1011,12 +1012,14 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $database->method('listFields')->willReturn([]);
 
                     return $database;
+
                 case File::class:
                     $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => '4923hef8fh827fhf448f0438h']);
                     $file = $this->mockClassWithProperties(File::class, ['getModel' => 'true']);
                     $file->method('getModel')->willReturn($fileModel);
 
                     return $file;
+
                 default:
                     return null;
             }
@@ -1136,12 +1139,14 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $database->method('listFields')->willReturn([]);
 
                     return $database;
+
                 case File::class:
                     $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => '4923hef8fh827fhf448f0438h']);
                     $file = $this->mockClassWithProperties(File::class, ['getModel' => 'true']);
                     $file->method('getModel')->willReturn($fileModel);
 
                     return $file;
+
                 default:
                     return null;
             }
@@ -1474,9 +1479,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $file->method('getModel')->willReturn(null);
 
                     return $file;
+
                     break;
+
                 default:
                     return null;
+
                     break;
             }
         });
@@ -1509,9 +1517,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $file->method('getModel')->willReturn(null);
 
                     return $file;
+
                     break;
+
                 default:
                     return null;
+
                     break;
             }
         });
@@ -1540,9 +1551,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $file->method('getModel')->willReturn($filesModel);
 
                     return $file;
+
                     break;
+
                 default:
                     return null;
+
                     break;
             }
         });
@@ -1575,9 +1589,12 @@ class FormMultiFileUploadTest extends ContaoTestCase
                     $file->method('getModel')->willReturn($filesModel);
 
                     return $file;
+
                     break;
+
                 default:
                     return null;
+
                     break;
             }
         });
@@ -1628,7 +1645,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
     protected function createTestFiles(array $files)
     {
         foreach ($files as $file) {
-            $result = fopen(TL_ROOT.'/files/'.$file, 'c');
+            $result = fopen(TL_ROOT.'/files/'.$file, 'cb');
         }
     }
 }

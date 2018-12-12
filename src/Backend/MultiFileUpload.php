@@ -11,6 +11,7 @@ namespace HeimrichHannot\MultiFileUploadBundle\Backend;
 use Contao\BackendUser;
 use Contao\Config;
 use Contao\Controller;
+use Contao\Environment;
 use Contao\File;
 use Contao\FileUpload;
 use Contao\FrontendTemplate;
@@ -53,23 +54,27 @@ class MultiFileUpload extends FileUpload
      * @var bool
      */
     protected $isXhtml = false;
+    protected $container;
 
     public function __construct(array $attributes, $widget = null)
     {
         parent::__construct();
+        $this->container = System::getContainer();
+        $this->framework = $this->container->get('contao.framework');
         $this->data = $attributes;
         $this->widget = $widget;
 
-        $file = System::getContainer()->get('huh.request')->getGet('file', true);
+        $file = $this->container->get('huh.request')->getGet('file', true);
 
         // Send the file to the browser
         if (!empty($file)) {
             if (!$this->isAllowedDownload($file)) {
                 header('HTTP/1.1 403 Forbidden');
+
                 die('No file access.');
             }
 
-            System::getContainer()->get('contao.framework')->getAdapter(Controller::class)->sendFileToBrowser($file);
+            $this->framework->getAdapter(Controller::class)->sendFileToBrowser($file);
         }
 
         global $objPage;
@@ -104,6 +109,7 @@ class MultiFileUpload extends FileUpload
         switch ($key) {
             case 'name':
                 return $this->strName;
+
                 break;
         }
 
@@ -149,9 +155,16 @@ class MultiFileUpload extends FileUpload
         $objT->class = $objT->class.' '.$this->widget->name;
         $objT->class = trim($objT->class);
 
+        $hideLabel = isset($this->data['hideLabel']) ? (bool) $this->data['hideLabel'] : false;
+
+        $objT->hideLabel = !(
+            !$hideLabel
+            && $this->container->get('huh.utils.container')->isFrontend()
+        );
         // store in session to validate on upload that field is allowed by user
         $fields = System::getContainer()->get('session')->get(static::SESSION_FIELD_KEY);
         $dca = $this->widget->arrDca;
+
         if (!$dca) {
             $dca = $GLOBALS['TL_DCA'][$this->widget->strTable]['fields'][$this->widget->strField];
         }
@@ -189,17 +202,25 @@ class MultiFileUpload extends FileUpload
             case 'thumbnailHeight':
             case 'previewsContainer':
                 $varValue = $this->data[$key];
+
                 break;
+
             case 'onchange':
                 $varValue = System::getContainer()->get('huh.utils.container')->isBackend() ? $this->data[$key] : 'this.form.submit()';
+
                 break;
+
             case 'createImageThumbnails':
                 $varValue = ($this->thumbnailWidth || $this->thumbnailHeight && $this->data[$key]) ? 'true' : 'false';
+
                 break;
+
             case 'name':
                 $varValue = $this->data[$key];
                 $key = 'paramName';
+
                 break;
+
             case 'dictDefaultMessage':
             case 'dictFallbackMessage':
             case 'dictFallbackText':
@@ -210,7 +231,8 @@ class MultiFileUpload extends FileUpload
             case 'dictCancelUploadConfirmation':
             case 'dictRemoveFile':
             case 'dictMaxFilesExceeded':
-                $varValue = is_array($this->data[$key]) ? reset($this->data[$key]) : $this->data[$key];
+                $varValue = \is_array($this->data[$key]) ? reset($this->data[$key]) : $this->data[$key];
+
                 break;
         }
 
@@ -255,7 +277,7 @@ class MultiFileUpload extends FileUpload
     {
         $arrDownloads = System::getContainer()->get('session')->get(static::SESSION_ALLOWED_DOWNLOADS);
 
-        if (!is_array($arrDownloads)) {
+        if (!\is_array($arrDownloads)) {
             $arrDownloads = [];
         }
 
@@ -275,7 +297,7 @@ class MultiFileUpload extends FileUpload
     {
         $arrDownloads = System::getContainer()->get('session')->get(static::SESSION_ALLOWED_DOWNLOADS);
 
-        if (!is_array($arrDownloads)) {
+        if (!\is_array($arrDownloads)) {
             return false;
         }
 
@@ -389,6 +411,7 @@ class MultiFileUpload extends FileUpload
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
 
         $maxFilesDefault = 1;
+
         if (System::getContainer()->hasParameter('huh.multifileupload.max_files_default')) {
             $maxFilesDefault = System::getContainer()->getParameter('huh.multifileupload.max_files_default');
         }
@@ -483,7 +506,7 @@ class MultiFileUpload extends FileUpload
         $containerUtils = System::getContainer()->get('huh.utils.container');
 
         if ($containerUtils->isFrontend()) {
-            $strHref = System::getContainer()->get('huh.ajax.action')->removeAjaxParametersFromUrl(\Environment::get('uri'));
+            $strHref = System::getContainer()->get('huh.ajax.action')->removeAjaxParametersFromUrl(Environment::get('uri'));
             $strHref .= ((Config::get('disableAlias') || false !== strpos($strHref, '?')) ? '&' : '?').'file='.System::urlEncode($file->value);
 
             return 'window.open("'.$strHref.'", "_blank");';

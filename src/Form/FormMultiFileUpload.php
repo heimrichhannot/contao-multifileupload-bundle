@@ -78,7 +78,7 @@ class FormMultiFileUpload extends Upload
 
         if ($this->strTable) {
             // add onsubmit_callback at first onsubmit_callback position: move files after form submission
-            if (is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'])) {
+            if (\is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'])) {
                 $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']] + $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'];
             } else {
                 $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']];
@@ -118,7 +118,7 @@ class FormMultiFileUpload extends Upload
                 throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, $container->getParameter('huh.multifileupload.upload_tmp')));
             }
 
-            if (!is_array($arrFiles)) {
+            if (!\is_array($arrFiles)) {
                 $arrFiles = [$arrFiles];
             }
 
@@ -138,7 +138,7 @@ class FormMultiFileUpload extends Upload
                 $target = $strUploadFolder.'/'.$file->name;
 
                 // uploadPathCallback
-                if (isset($arrData['uploadPathCallback']) && is_array($arrData['uploadPathCallback'])) {
+                if (isset($arrData['uploadPathCallback']) && \is_array($arrData['uploadPathCallback'])) {
                     foreach ($arrData['uploadPathCallback'] as $callback) {
                         $target = System::importStatic($callback[0])->{$callback[1]}($target, $file, $dc) ?: $target;
                     }
@@ -166,11 +166,11 @@ class FormMultiFileUpload extends Upload
             }
 
             // HOOK: post upload callback
-            if (isset($GLOBALS['TL_HOOKS']['postUpload']) && is_array($GLOBALS['TL_HOOKS']['postUpload'])) {
+            if (isset($GLOBALS['TL_HOOKS']['postUpload']) && \is_array($GLOBALS['TL_HOOKS']['postUpload'])) {
                 foreach ($GLOBALS['TL_HOOKS']['postUpload'] as $callback) {
-                    if (is_array($callback)) {
+                    if (\is_array($callback)) {
                         System::importStatic($callback[0])->{$callback[1]}($arrTargets);
-                    } elseif (is_callable($callback)) {
+                    } elseif (\is_callable($callback)) {
                         $callback($arrTargets);
                     }
                 }
@@ -214,9 +214,9 @@ class FormMultiFileUpload extends Upload
         $strField = $this->name;
         $varFile = $request->files->get($strField);
         // Multi-files upload at once
-        if (is_array($varFile)) {
+        if (\is_array($varFile)) {
             // prevent disk flooding
-            if (count($varFile) > $this->maxFiles) {
+            if (\count($varFile) > $this->maxFiles) {
                 $objResponse = new ResponseError();
                 $objResponse->setMessage('Bulk file upload violation.');
                 $objResponse->output();
@@ -280,9 +280,10 @@ class FormMultiFileUpload extends Upload
         $arrDeleted = json_decode(($this->getPost('deleted_'.$this->strName)));
         $blnEmpty = false;
 
-        if (is_array($arrFiles) && is_array($arrDeleted)) {
+        if (\is_array($arrFiles) && \is_array($arrDeleted)) {
             $blnEmpty = empty(array_diff($arrFiles, $arrDeleted));
         }
+
         if ($this->mandatory && $blnEmpty) {
             if ('' === $this->strLabel || null === $this->strLabel) {
                 $this->addError($GLOBALS['TL_LANG']['ERR']['mdtryNoLabel']);
@@ -294,11 +295,11 @@ class FormMultiFileUpload extends Upload
             return false;
         }
 
-        if (!$this->skipDeleteAfterSubmit && is_array($arrDeleted)) {
+        if (!$this->skipDeleteAfterSubmit && \is_array($arrDeleted)) {
             $this->deleteScheduledFiles($arrDeleted);
         }
 
-        if (is_array($arrFiles)) {
+        if (\is_array($arrFiles)) {
             foreach ($arrFiles as $k => $v) {
                 if (!Validator::isUuid($v)) {
                     $this->addError($GLOBALS['TL_LANG']['ERR']['invalidUuid']);
@@ -309,6 +310,7 @@ class FormMultiFileUpload extends Upload
                 // cleanup non existing files on save
                 if (null === ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($v)) || !$file->exists()) {
                     unset($arrFiles[$k]);
+
                     continue;
                 }
 
@@ -385,13 +387,13 @@ class FormMultiFileUpload extends Upload
 
         $attributes['timeout'] = (int) (isset($attributes['timeout']) ? $attributes['timeout'] : (ini_get('max_execution_time') ?: 120)) * 1000;
 
-        if (isset($attributes['value']) && !is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
+        if (isset($attributes['value']) && !\is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
             $attributes['value'] = json_decode($attributes['value']);
         }
 
         // bin to string -> never pass binary to the widget!!
         if (isset($attributes['value'])) {
-            if (is_array($attributes['value'])) {
+            if (\is_array($attributes['value'])) {
                 $attributes['value'] = array_map(function ($val) {
                     return Validator::isBinaryUuid($val) ? StringUtil::binToUuid($val) : $val;
                 }, $attributes['value']);
@@ -420,6 +422,7 @@ class FormMultiFileUpload extends Upload
             foreach ($arrTableFields as $arrField) {
                 if ($arrField['name'] === $attributes['name'] && 'index' !== $arrField['type'] && 'binary' === $arrField['type']) {
                     $this->singleFile = true;
+
                     break;
                 }
             }
@@ -431,7 +434,7 @@ class FormMultiFileUpload extends Upload
      */
     protected function setVariables(array $attributes)
     {
-        if (null !== $this->objUploader && is_array($this->objUploader->getData())) {
+        if (null !== $this->objUploader && \is_array($this->objUploader->getData())) {
             $attributes = array_merge($attributes, $this->objUploader->getData());
         }
 
@@ -457,7 +460,7 @@ class FormMultiFileUpload extends Upload
 
         $strExtension = strtolower($objUploadFile->getClientOriginalExtension());
 
-        if (!$strExtension || !is_array($arrAllowed) || !in_array($strExtension, $arrAllowed)) {
+        if (!$strExtension || !\is_array($arrAllowed) || !\in_array($strExtension, $arrAllowed)) {
             return sprintf(sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $strExtension));
         }
 
@@ -492,6 +495,7 @@ class FormMultiFileUpload extends Upload
                 case 'text/x-comma-separated-values':
                 case 'text/tab-separated-values':
                     return true;
+
                     break;
             }
 
@@ -558,11 +562,13 @@ class FormMultiFileUpload extends Upload
         }
 
         $error = false;
+
         if (false !== ($error = $this->validateExtension($uploadFile))) {
             return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
         $targetFileName = $container->get('huh.utils.file')->addUniqueIdToFilename($sanitizeFileName, static::UNIQID_PREFIX);
+
         try {
             $uploadFile = $uploadFile->move(TL_ROOT.'/'.$uploadFolder, $targetFileName);
         } catch (FileException $e) {
@@ -604,7 +610,7 @@ class FormMultiFileUpload extends Upload
         }
 
         // validateUploadCallback
-        if (is_array($this->validateUploadCallback)) {
+        if (\is_array($this->validateUploadCallback)) {
             foreach ($this->validateUploadCallback as $callback) {
                 if (!isset($callback[0]) || !class_exists($callback[0])) {
                     continue;
@@ -618,6 +624,7 @@ class FormMultiFileUpload extends Upload
 
                 if ($errorCallback = $objCallback->{$callback[1]}($file, $this)) {
                     $error = $errorCallback;
+
                     break; // stop validation on first error
                 }
             }

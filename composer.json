@@ -16,12 +16,12 @@
     "php": "^7.1",
     "contao/core-bundle": "^4.4",
     "symfony/framework-bundle": "^3.4",
-    "heimrichhannot/dropzone-latest": "^5.0",
+    "heimrichhannot-contao-components/dropzone-latest": "^1.0",
     "heimrichhannot/contao-ajax-bundle": "^1.0",
     "heimrichhannot/contao-components": "^2.0"
   },
   "require-dev": {
-    "contao/test-case": "^1.1",
+    "contao/test-case": "1.1.*",
     "contao/manager-plugin": "^2.0",
     "friendsofphp/php-cs-fixer": "^2.2",
     "phpunit/phpunit": ">=6.0 <6.5",

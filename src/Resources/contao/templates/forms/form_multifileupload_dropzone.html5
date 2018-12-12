@@ -1,12 +1,12 @@
 <?php $this->extend('form_row'); ?>
 <?php $this->block('label'); ?>
 <?php // in backend mode labels will be generated different (H3) ?>
-<?php if ($this->label && !$this->hideLabel && \Contao\System::getContainer()->get('huh.utils.container')->isFrontend() && !in_array('bootstrapper', array_keys(System::getContainer()->getParameter('kernel.bundles')))): ?>
-    <label style="font-weight: bold;" for="ctrl_<?= $this->id; ?>"<?php if ($this->class): ?> class="<?= $this->class; ?>"<?php endif; ?>>
+<?php if ($this->label && !$this->hideLabel): ?>
+    <label for="ctrl_<?= $this->id ?>"<?php if ($this->class): ?> class="<?= $this->class ?>"<?php endif; ?>>
         <?php if ($this->mandatory): ?>
-            <span class="invisible"><?= $this->mandatoryField; ?></span> <?= $this->label; ?><span class="mandatory">*</span>
+            <span class="invisible"><?= $this->mandatoryField ?> </span><?= $this->label ?><span class="mandatory">*</span>
         <?php else: ?>
-            <?= $this->label; ?>
+            <?= $this->label ?>
         <?php endif; ?>
     </label>
 <?php endif; ?>

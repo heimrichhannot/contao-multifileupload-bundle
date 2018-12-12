@@ -19,7 +19,7 @@ $GLOBALS['BE_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Wi
 /**
  * Hooks
  */
-$GLOBALS['TL_HOOKS']['executePostActions']['multifileupload'] = ['HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload', 'executePostActionsHook'];
+$GLOBALS['TL_HOOKS']['executePostActions']['multifileupload'] = ['huh.multifileupload.listener.hooks', 'executePostActionsHook'];
 
 /**
  * Ajax action

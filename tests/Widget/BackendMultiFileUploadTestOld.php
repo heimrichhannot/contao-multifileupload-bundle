@@ -36,9 +36,11 @@ use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpKernel\Config\FileLocator;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
-class BackendMultiFileUploadTest extends ContaoTestCase
+class BackendMultiFileUploadTestOld extends ContaoTestCase
 {
     /**
      * @var Request
@@ -65,12 +67,12 @@ class BackendMultiFileUploadTest extends ContaoTestCase
 
     public function setUp()
     {
-        if (!defined('TL_MODE')) {
-            define('TL_MODE', 'FE');
+        if (!\defined('TL_MODE')) {
+            \define('TL_MODE', 'FE');
         }
 
-        if (!defined('UNIT_TESTING')) {
-            define('UNIT_TESTING', true);
+        if (!\defined('UNIT_TESTING')) {
+            \define('UNIT_TESTING', true);
         }
 
         parent::setUp();
@@ -164,7 +166,10 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         $container->set('huh.utils.file', new FileUtil($this->mockContaoFramework()));
         $container->set('huh.utils.string', new StringUtil($this->mockContaoFramework()));
         $container->set('filesystem', new Filesystem());
-        $container->set('huh.utils.container', new ContainerUtil($this->mockContaoFramework()));
+
+        $filelocator = new FileLocator($this->createMock(KernelInterface::class));
+
+        $container->set('huh.utils.container', new ContainerUtil($this->mockContaoFramework(), $filelocator, $scopeMatcher));
         $container->set('huh.utils.url', new UrlUtil($this->mockContaoFramework()));
         $container->setParameter('contao.resources_paths', [TL_ROOT]);
         $container->setParameter('kernel.logs_dir', TL_ROOT);
@@ -238,6 +243,7 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         $this->assertFalse($class->executePostActionsHook('test', $this->getDataContainer()));
 
         System::getContainer()->get('session')->set('multifileupload_fields', ['tl_files' => ['field' => $arrDca]]);
+
         try {
             $class->executePostActionsHook('multifileupload_upload', $this->getDataContainer());
             $this->expectException(AjaxExitException::class);
@@ -295,12 +301,14 @@ class BackendMultiFileUploadTest extends ContaoTestCase
                     $database->method('listFields')->willReturn([]);
 
                     return $database;
+
                 case File::class:
                     $fileModel = $this->mockClassWithProperties(FilesModel::class, ['uuid' => '4923hef8fh827fhf448f0438h']);
                     $file = $this->mockClassWithProperties(File::class, ['getModel' => 'true']);
                     $file->method('getModel')->willReturn($fileModel);
 
                     return $file;
+
                 default:
                     return null;
             }
@@ -350,6 +358,7 @@ class BackendMultiFileUploadTest extends ContaoTestCase
         }
 
         System::getContainer()->get('huh.request')->files->remove('files');
+
         try {
             $this->assertNull($class->executePostActionsHook('multifileupload_upload', $this->getDataContainer()));
         } catch (AjaxExitException $exception) {
@@ -374,7 +383,7 @@ class BackendMultiFileUploadTest extends ContaoTestCase
     protected function createTestFiles(array $files)
     {
         foreach ($files as $file) {
-            $result = fopen(TL_ROOT.'/files/'.$file, 'c');
+            $result = fopen(TL_ROOT.'/files/'.$file, 'cb');
         }
     }
 }

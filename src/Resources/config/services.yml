@@ -1,4 +1,8 @@
 services:
+    huh.multifileupload.listener.hooks:
+        class: HeimrichHannot\MultiFileUploadBundle\EventListener\HookListener
+        autowire: true
+        public: true
 
 parameters:
     huh.multifileupload.mime_theme_default: 'system/modules/multifileupload/assets/img/mimetypes/Numix-uTouch'

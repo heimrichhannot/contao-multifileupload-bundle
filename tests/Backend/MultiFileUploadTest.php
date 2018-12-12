@@ -14,6 +14,7 @@ use Contao\Database;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\PageModel;
+use Contao\RequestToken;
 use Contao\System;
 use Contao\TestCase\ContaoTestCase;
 use Contao\Widget;
@@ -33,6 +34,8 @@ use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpKernel\Config\FileLocator;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
 class MultiFileUploadTest extends ContaoTestCase
@@ -47,12 +50,12 @@ class MultiFileUploadTest extends ContaoTestCase
 
     public function setUp()
     {
-        if (!defined('TL_MODE')) {
-            define('TL_MODE', 'FE');
+        if (!\defined('TL_MODE')) {
+            \define('TL_MODE', 'FE');
         }
 
-        if (!defined('UNIT_TESTING')) {
-            define('UNIT_TESTING', true);
+        if (!\defined('UNIT_TESTING')) {
+            \define('UNIT_TESTING', true);
         }
         global $objPage;
 
@@ -128,7 +131,8 @@ class MultiFileUploadTest extends ContaoTestCase
         $container->set('contao.framework', $framework);
         $container->set('session', new Session(new MockArraySessionStorage()));
         $container->set('database_connection', $this->mockClassWithProperties(Database::class, []));
-        $container->set('huh.utils.container', new ContainerUtil($this->mockContaoFramework()));
+        $filelocator = new FileLocator($this->createMock(KernelInterface::class));
+        $container->set('huh.utils.container', new ContainerUtil($this->mockContaoFramework(), $filelocator, $scopeMatcher));
         $container->set('huh.ajax', new AjaxManager());
         $container->set('huh.utils.file', new FileUtil($this->mockContaoFramework()));
         $container->set('huh.utils.string', new StringUtil($this->mockContaoFramework()));
@@ -160,7 +164,7 @@ class MultiFileUploadTest extends ContaoTestCase
         $request = new Request($this->mockContaoFramework(), $requestStack, $scopeMatcher);
         $request->setGet('file', '');
         $request->headers->set('X-Requested-With', 'XMLHttpRequest'); // xhr request
-        $request->request->set('requestToken', \RequestToken::get());
+        $request->request->set('requestToken', RequestToken::get());
         $request->request->set('files', []);
 
         $container = System::getContainer();
@@ -225,16 +229,20 @@ class MultiFileUploadTest extends ContaoTestCase
         $resourceFinder->method('findIn')->willReturnSelf();
         $resourceFinder->method('name')->willReturnCallback(function ($fileName) {
             $file = $this->mockAdapter(['getPathname']);
+
             switch ($fileName) {
                 case 'form_multifileupload_dropzone.html5':
                     $file->method('getPathname')->willReturn(__DIR__.'/../../src/Resources/contao/templates/forms/form_multifileupload_dropzone.html5');
 
                     return [$file];
+
                     break;
+
                 case 'form_row.html5':
                     $file->method('getPathname')->willReturn(__DIR__.'/../../vendor/contao/core-bundle/src/Resources/contao/templates/forms/form_row.html5');
 
                     return [$file];
+
                     break;
             }
         });
@@ -321,6 +329,7 @@ class MultiFileUploadTest extends ContaoTestCase
         ], $result);
 
         $array = ['dictMaxFilesExceeded'];
+
         foreach ($array as $item) {
             $this->assertTrue($class->getDropZoneOption($item));
         }
