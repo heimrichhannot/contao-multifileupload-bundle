@@ -8,12 +8,16 @@
 # Contao Multi File Upload Bundle
 
 Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com/) functionality to both back and front end.
-The javascript is written in native javascript and invoked for both jquery and mootools on "document ready" and "ajax complete".
 
 ![alt text](/doc/multifileupload-demo.jpg "Multifileupload demo within contao backend")
 
 
 ## Features
+
+* javascript written in native javascript
+* support for jquery ajaxComplete and mootools ajax_change events
+* support for [Encore Bundle](https://github.com/heimrichhannot/contao-encore-bundle)
+* support for [Formhybrid Compatibility Bundle Bundle](https://github.com/heimrichhannot/contao-formhybrid-compatibility-bundle) formhybrid_ajax_complete event 
 
 ### Technical instructions
 
@@ -55,13 +59,13 @@ A flowchart with description of the full upload procedure with callback injectio
 
 Defined at your field's dca.
 
-Name | Default | Description
----- | ------- | -----------
-fieldType | 'checkbox' | If set to "checkbox", multiple files can be uploaded, for single upload set to 'radio'
-extensions | \Config::get('uploadTypes') | A comma separated list of allowed file types (e.g. "jpg,png")
+Name          | Default    | Description
+------------- | ---------- | -----------
+fieldType     | 'checkbox' | If set to "checkbox", multiple files can be uploaded, for single upload set to 'radio'
+extensions    | \Config::get('uploadTypes') | A comma separated list of allowed file types (e.g. "jpg,png")
 maxUploadSize | minimum of $GLOBALS['TL_CONFIG']['maxFileSize'] and php.ini 'upload_max_filesize' | The desired maximum upload size measured in Bytes (e.g. "100"), KiB, MiB or GiB (e.g. "10M"). Can not exceed $GLOBALS['TL_CONFIG']['maxFileSize'] or php upload_max_filesize value.
-maxFiles | 10 | The maximum file count per field
-uploadFolder | null | The upload folder as String, e.g. "files/uploads", function or array. **(must be declared !!!)**, required to move files to correct destination after submission.
+maxFiles      | 10 | The maximum file count per field
+uploadFolder  | null | The upload folder as String, e.g. "files/uploads", function or array. **(must be declared !!!)**, required to move files to correct destination after submission.
 addRemoveLinks | true | Remove links are added to each of the file avatars in the jquery (caption can be overwritten within language files)
 minImageWidth | 0 | The minimum image width. Set to 0 for no min width image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
 minImageHeight | 0 | The minimum image height. Set to 0 for no min height image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.

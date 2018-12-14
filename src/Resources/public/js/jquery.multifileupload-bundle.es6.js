@@ -1,5 +1,3 @@
-global.$ = global.jQuery = require('jquery');
-
 let Dropzone = require('dropzone');
 // Disabling autoDiscover, otherwise Dropzone will try to attach twice.
 Dropzone.autoDiscover = false;
@@ -410,26 +408,24 @@ MultiFileUpload = {
 }
 ;
 
-// jquery support
-if (window.jQuery) {
-    $(document).ready(function() {
-        MultiFileUpload.init();
+document.addEventListener('DOMContentLoaded', function() {
+    MultiFileUpload.init();
 
-        $(document).ajaxComplete(function() {
+    // jquery support
+    if (window.jQuery) {
+        window.jQuery(document).ajaxComplete(function() {
             MultiFileUpload.init();
         });
-    });
+    }
 
-}
+    // mootools support
+    if (window.MooTools) {
+        window.addEvent('ajax_change', function() {
+            MultiFileUpload.init();
+        });
+    }
 
-// mootools support
-if (window.MooTools) {
-
-    window.addEvent('domready', function() {
+    document.addEventListener('formhybrid_ajax_complete', function() {
         MultiFileUpload.init();
     });
-
-    window.addEvent('ajax_change', function() {
-        MultiFileUpload.init();
-    });
-}
+});

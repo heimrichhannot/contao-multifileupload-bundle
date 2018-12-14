@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2018-12-14
+
+#### Added 
+- support for [Contao Formhybrid Compatibility Bundle](https://github.com/heimrichhannot/contao-formhybrid-compatibility-bundle)
+
 ## [1.1.0] - 2018-12-12
 
 #### Changed
