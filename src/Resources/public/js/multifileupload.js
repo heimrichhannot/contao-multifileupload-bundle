@@ -94,13 +94,13 @@ var MultiFileUpload,
 
                     if (typeof uploaded !== 'undefined' && typeof file.uuid !== 'undefined') {
                         var arrUploaded = JSON.parse(uploaded.value);
-                        uploaded.value = JSON.stringify(UtilsBundle.removeFromArray(file.uuid, arrUploaded));
+                        uploaded.value = JSON.stringify(utilsBundle.array.removeFromArray(file.uuid, arrUploaded));
                     }
 
                     if (typeof filesToSave !== 'undefined' && typeof file.uuid !== 'undefined') {
                         var arrFilesToSave = JSON.parse(filesToSave.value);
                         filesToSave.value = JSON.stringify(
-                            UtilsBundle.removeFromArray(file.uuid, arrFilesToSave));
+                            utilsBundle.array.removeFromArray(file.uuid, arrFilesToSave));
                     }
 
                     if (typeof deleted !== 'undefined' && typeof file.uuid !== 'undefined') {
@@ -129,7 +129,7 @@ var MultiFileUpload,
                 }
 
                 // update request token
-                dropzone.options.url = UtilsBundle.addParameterToUri(dropzone.options.url, 'ato',
+                dropzone.options.url = utilsBundle.url.addParameterToUri(dropzone.options.url, 'ato',
                     response.token);
 
                 // each file is handled here
@@ -334,13 +334,13 @@ MultiFileUpload = {
 
             config.url = location.href;
 
-            if (UtilsBundle.isTruthy(history.state) && UtilsBundle.isTruthy(history.state.url)) {
+            if (utilsBundle.util.isTruthy(history.state) && utilsBundle.util.isTruthy(history.state.url)) {
                 config.url = history.state.url;
             }
 
             if (config.uploadActionParams) {
-                var params = UtilsBundle.parseQueryString(config.uploadActionParams);
-                config.url = UtilsBundle.addParametersToUri(config.url, params);
+                var params = utilsBundle.url.parseQueryString(config.uploadActionParams);
+                config.url = UtilsBundle.url.addParametersToUri(config.url, params);
             }
 
             new Dropzone(field, config);

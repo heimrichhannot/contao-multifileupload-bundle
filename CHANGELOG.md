@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2019-01-08
+
+#### Fixed
+- access to utilsBundle in JS
+
 ## [1.1.1] - 2018-12-14
 
 #### Added 
