@@ -58,6 +58,6 @@ if (\Contao\System::getContainer()->get('huh.utils.container')->isBackend() && '
 
     $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static';
 
-    $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/min/dropzone.min.js|static';
-    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static';
+    $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/dropzone.js|static';
+    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.js|static';
 }

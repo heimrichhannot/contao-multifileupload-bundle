@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2018 Heimrich & Hannot GmbH
+ * Copyright (c) 2019 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -20,10 +20,11 @@ use Contao\System;
 use Contao\Upload;
 use Contao\Validator;
 use HeimrichHannot\AjaxBundle\Response\ResponseData;
-use HeimrichHannot\AjaxBundle\Response\ResponseError;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use Model\Collection;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -179,7 +180,9 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @return ResponseError|ResponseSuccess
+     * @throws \Exception
+     *
+     * @return ResponseSuccess|DropzoneErrorResponse|void
      */
     public function upload()
     {
@@ -189,7 +192,7 @@ class FormMultiFileUpload extends Upload
         $varReturn = null;
         // check for the request token
         if (!$request->hasPost('requestToken') || !\RequestToken::validate($request->getPost('requestToken'))) {
-            $objResponse = new ResponseError();
+            $objResponse = new DropzoneErrorResponse();
             $objResponse->setMessage('Invalid Request Token!');
             $objResponse->output();
         }
@@ -198,17 +201,28 @@ class FormMultiFileUpload extends Upload
             return;
         }
 
-        $objTmpFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
+        $tempUploadFolder = new Folder($container->getParameter('huh.multifileupload.upload_tmp'));
 
         // tmp directory is not public, mandatory for preview images
-        if (!file_exists($this->container->getParameter('contao.web_dir')
-            .\DIRECTORY_SEPARATOR
-            .$this->container->getParameter('huh.multifileupload.upload_tmp'))
+        $tmpPath = $this->container->getParameter('contao.web_dir').\DIRECTORY_SEPARATOR.$this->container->getParameter('huh.multifileupload.upload_tmp');
+
+        if (!file_exists($tmpPath)
         ) {
-            $objTmpFolder->unprotect();
-            $input = new ArrayInput([]);
-            $output = new NullOutput();
-            $this->container->get('contao.command.symlinks')->run($input, $output);
+            try {
+                $tempUploadFolder->unprotect();
+                $application = new Application($container->get('kernel'));
+                $application->setAutoExit(false);
+
+                $input = new ArrayInput([
+                    'command' => 'contao:symlinks',
+                ]);
+                $output = new NullOutput();
+                $application->run($input, $output);
+            } catch (\Exception $e) {
+                $objResponse = new DropzoneErrorResponse();
+                $objResponse->setMessage('Error at running symlink command: '.$e->getMessage());
+                $objResponse->output();
+            }
         }
 
         $strField = $this->name;
@@ -217,7 +231,7 @@ class FormMultiFileUpload extends Upload
         if (\is_array($varFile)) {
             // prevent disk flooding
             if (\count($varFile) > $this->maxFiles) {
-                $objResponse = new ResponseError();
+                $objResponse = new DropzoneErrorResponse();
                 $objResponse->setMessage('Bulk file upload violation.');
                 $objResponse->output();
             }
@@ -226,7 +240,7 @@ class FormMultiFileUpload extends Upload
              * @var UploadedFile
              */
             foreach ($varFile as $strKey => $objFile) {
-                $arrFile = $this->uploadFile($objFile, $objTmpFolder->path);
+                $arrFile = $this->uploadFile($objFile, $tempUploadFolder->path);
                 $varReturn[] = $arrFile;
 
                 if (isset($varReturn['uuid']) && Validator::isUuid($arrFile['uuid'])) {
@@ -235,7 +249,7 @@ class FormMultiFileUpload extends Upload
             }
         } else {
             // Single-file upload
-            $varReturn = $this->uploadFile($varFile, $objTmpFolder->path);
+            $varReturn = $this->uploadFile($varFile, $tempUploadFolder->path);
 
             if (isset($varReturn['uuid']) && Validator::isUuid($varReturn['uuid'])) {
                 $uuids[] = $varReturn['uuid'];

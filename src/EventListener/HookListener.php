@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2018 Heimrich & Hannot GmbH
+ * Copyright (c) 2019 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -14,9 +14,9 @@ use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\DataContainer;
 use Contao\Widget;
 use HeimrichHannot\AjaxBundle\Response\Response;
-use HeimrichHannot\AjaxBundle\Response\ResponseError;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -57,7 +57,7 @@ class HookListener
                 ['contao' => new ContaoContext(__CLASS__.'::'.__METHOD__, TL_ERROR)]
             );
 
-            $objResponse = new ResponseError();
+            $objResponse = new DropzoneErrorResponse();
             $objResponse->setMessage('Bad Request');
             $objResponse->output();
         }

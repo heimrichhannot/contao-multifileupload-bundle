@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2019-01-22
+
+#### Fixed
+- error with non working error messages due incompatible error responses
+- symlink command if temp folder not symlinked
+
 ## [1.1.2] - 2019-01-08
 
 #### Fixed
