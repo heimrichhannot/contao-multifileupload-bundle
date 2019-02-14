@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.4] - 2019-02-14
+
+#### Fixed
+- `Call to a member function getAdapter() on null in vendor/heimrichhannot/contao-multifileupload-bundle/src/Backend/MultiFileUpload.php (line 79)` (see: #7)
+- Typo in `multifileupad.js` (see #6)
+- contao 4.6 support (see #4)
+- started `FFL` integration with contao form-generator (see #1 and #3)
+
 ## [1.1.3] - 2019-01-22
 
 #### Fixed

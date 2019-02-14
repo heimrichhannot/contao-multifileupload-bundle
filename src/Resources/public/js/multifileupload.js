@@ -340,7 +340,7 @@ MultiFileUpload = {
 
             if (config.uploadActionParams) {
                 var params = utilsBundle.url.parseQueryString(config.uploadActionParams);
-                config.url = UtilsBundle.url.addParametersToUri(config.url, params);
+                config.url = utilsBundle.url.addParametersToUri(config.url, params);
             }
 
             new Dropzone(field, config);

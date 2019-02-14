@@ -73,6 +73,11 @@ class FormMultiFileUpload extends Upload
 
         parent::__construct($attributes);
 
+        // form generator fix, here the id of the field is
+        if (is_numeric($attributes['id'])) {
+            $attributes['id'] = $attributes['name'];
+        }
+
         $this->objUploader = new MultiFileUpload($attributes, $this);
 
         $this->setVariables($attributes);
@@ -589,7 +594,7 @@ class FormMultiFileUpload extends Upload
             return $this->prepareErrorArray(sprintf($GLOBALS['TL_LANG']['ERR']['moveUploadFile'], $e->getMessage()), $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        $relativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getRealPath()), \DIRECTORY_SEPARATOR);
+        $relativePath = ltrim(str_replace(TL_ROOT, '', $uploadFile->getPathname()), \DIRECTORY_SEPARATOR);
 
         $file = null;
         $fileModel = null;

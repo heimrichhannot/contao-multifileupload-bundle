@@ -11,6 +11,7 @@ namespace HeimrichHannot\MultiFileUploadBundle\Backend;
 use Contao\BackendUser;
 use Contao\Config;
 use Contao\Controller;
+use Contao\CoreBundle\Framework\ContaoFrameworkInterface;
 use Contao\Environment;
 use Contao\File;
 use Contao\FileUpload;
@@ -54,6 +55,15 @@ class MultiFileUpload extends FileUpload
      * @var bool
      */
     protected $isXhtml = false;
+
+    /**
+     * @var ContaoFrameworkInterface
+     */
+    protected $framework;
+
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerInterface
+     */
     protected $container;
 
     public function __construct(array $attributes, $widget = null)
@@ -74,7 +84,9 @@ class MultiFileUpload extends FileUpload
                 die('No file access.');
             }
 
-            $this->framework->getAdapter(Controller::class)->sendFileToBrowser($file);
+            /** @var Controller $controller */
+            $controller = $this->framework->getAdapter(Controller::class);
+            $controller->sendFileToBrowser($file);
         }
 
         global $objPage;
@@ -157,10 +169,8 @@ class MultiFileUpload extends FileUpload
 
         $hideLabel = isset($this->data['hideLabel']) ? (bool) $this->data['hideLabel'] : false;
 
-        $objT->hideLabel = !(
-            !$hideLabel
-            && $this->container->get('huh.utils.container')->isFrontend()
-        );
+        $objT->hideLabel = !(!$hideLabel
+                             && $this->container->get('huh.utils.container')->isFrontend());
         // store in session to validate on upload that field is allowed by user
         $fields = System::getContainer()->get('session')->get(static::SESSION_FIELD_KEY);
         $dca = $this->widget->arrDca;
@@ -383,9 +393,15 @@ class MultiFileUpload extends FileUpload
         // in MiB
         $this->maxFilesize = round(($this->getMaximumUploadFileSize($this->maxUploadSize) / 1024 / 1024), 2);
 
-        $this->acceptedFiles = implode(',', array_map(function ($a) {
-            return '.'.$a;
-        }, StringUtil::trimsplit(',', strtolower($this->extensions ?: Config::get('uploadTypes')))));
+        $this->acceptedFiles = implode(
+            ',',
+            array_map(
+                function ($a) {
+                    return '.'.$a;
+                },
+                StringUtil::trimsplit(',', strtolower($this->extensions ?: Config::get('uploadTypes')))
+            )
+        );
 
         // labels & messages
         $this->labels = $this->labels ?: $GLOBALS['TL_LANG']['MSC']['dropzone']['labels'];
