@@ -34,6 +34,8 @@ class FormMultiFileUpload extends Upload
 {
     const UNIQID_PREFIX = 'mfuid';
 
+    protected $strTemplate = 'form_multifileupload';
+
     /**
      * Submit user input.
      *

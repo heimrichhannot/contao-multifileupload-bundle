@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2019-03-05
+
+#### Fixed
+- backendtemplate rendered in frontend
+
 ## [1.1.4] - 2019-02-14
 
 #### Fixed
