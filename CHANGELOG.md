@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.1.5] - 2019-03-19
+## [1.1.7] - 2019-03-19
 
 #### Changed
 - added an polish translation
