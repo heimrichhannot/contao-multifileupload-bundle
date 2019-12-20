@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [1.2.0] - 2019-12-19
 - refactored bundled asset generation to encore
 - dropzone now included in bundle as own asset entry (version 5.5.1)
+- removed symfony/framework-bundle, heimrichhannot-contao-components/dropzone-latest and heimrichhannot/contao-components dependencies
+- config files now loaded via Plugin class
 - fixed an js excetion when upload field id contains invalid characters
 - fixed an typo in composer.json
 

@@ -19,15 +19,27 @@ Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com
 * support for [Encore Bundle](https://github.com/heimrichhannot/contao-encore-bundle)
 * support for [Formhybrid Compatibility Bundle Bundle](https://github.com/heimrichhannot/contao-formhybrid-compatibility-bundle) formhybrid_ajax_complete event 
 
-### Technical instructions
+## Setup
 
-Use the inputType "multifileupload" for your field. In the backend, the widget is replaced by a "fileTree".
+### Install
+
+1. Install heimrichhannot/contao-multifileupload-bundle via composer or contao manager
+
+    ```
+    composer require heimrichhannot/contao-multifileupload-bundle
+    ```
+   
+2. Update your database
+
+### Usage
+
+Set the inputType to `multifileupload`. It can be used in frontend and backend. 
 
 ```
 'client_logo' => [
     'label'     => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo'],
     'exclude'   => true,
-    'inputType' => TL_MODE == 'BE' ? 'fileTree' : 'multifileupload',
+    'inputType' => 'multifileupload',
     'eval'      => [
         'tl_class'      => 'clr',
         'extensions'    => Config::get('validImageTypes'),
@@ -50,6 +62,16 @@ Use the inputType "multifileupload" for your field. In the backend, the widget i
     'sql'       => "blob NULL",
 ],
 ```
+
+If you want the multifileupload widget to be replaced by fileTree in backend, you can use the following code:
+
+```php
+'client_logo' => [
+    'inputType' => TL_MODE == 'BE' ? 'fileTree' : 'multifileupload'
+]
+```
+
+## Documentation
 
 ### Flow chart
 

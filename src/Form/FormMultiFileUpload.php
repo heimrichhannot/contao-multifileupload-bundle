@@ -689,12 +689,4 @@ class FormMultiFileUpload extends Upload
             'filenameSanitized' => $sanitizeFileName,
         ];
     }
-
-    public function generate()
-    {
-        $this->objUploader->id = $this->id;
-        return parent::generate();
-    }
-
-
 }
