@@ -22,9 +22,8 @@ class GetAttributesFromDcaListener
     public function onGetAttributesFromDca(array $attributes, DataContainer $dc = null): array
     {
         if ('multifileupload' === $attributes['type']) {
-            $attributes['id'] = preg_replace('~[^A-Z0-9]+([A-Z0-9]+)(?:[^A-Z0-9]+$)?~i', '_$1', $attributes['id']);
-            $attributes['name'] = preg_replace('~[^A-Z0-9]+([A-Z0-9]+)(?:[^A-Z0-9]+$)?~i', '_$1', $attributes['id']);
-            $attributes['strField'] = preg_replace('~[^A-Z0-9]+([A-Z0-9]+)(?:[^A-Z0-9]+$)?~i', '_$1', $attributes['id']);
+            $attributes['id'] = $attributes['name'] = $attributes['strField'] =
+                preg_replace('~[^A-Z0-9]+([A-Z0-9]+)(?:[^A-Z0-9]+$)?~i', '_$1', $attributes['id']);
         }
         return $attributes;
     }

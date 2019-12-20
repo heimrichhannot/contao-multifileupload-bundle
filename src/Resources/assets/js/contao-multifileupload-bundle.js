@@ -1,8 +1,7 @@
 window.Dropzone = require('dropzone');
 // import 'dropzone/dist/dropzone.css';
 import { utilsBundle } from '@hundh/contao-utils-bundle';
-
-// import '../scss/dropzone.scss';
+import '../scss/dropzone.scss';
 
 // // let Dropzone = require('dropzone');
 // // Disabling autoDiscover, otherwise Dropzone will try to attach twice.

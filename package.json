@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "licence": "LGPL-3.0-or-later",
   "dependencies": {
-    "dropzone": "5.1.*",
+    "dropzone": "^5.1",
     "@hundh/contao-utils-bundle": "^1.15.0"
   },
   "devDependencies": {
