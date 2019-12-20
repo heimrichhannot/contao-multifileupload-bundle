@@ -1,49 +1,53 @@
-let Dropzone = require('dropzone');
-// Disabling autoDiscover, otherwise Dropzone will try to attach twice.
+window.Dropzone = require('dropzone');
+// import 'dropzone/dist/dropzone.css';
+import { utilsBundle } from '@hundh/contao-utils-bundle';
+import '../scss/dropzone.scss';
+
+// // let Dropzone = require('dropzone');
+// // Disabling autoDiscover, otherwise Dropzone will try to attach twice.
 Dropzone.autoDiscover = false;
 
-require('../css/dropzone.scss');
-import {utilsBundle} from '@hundh/contao-utils-bundle';
+// import {utilsBundle} from '@hundh/contao-utils-bundle';
 
-let MultiFileUpload,
-    rawurlencode = function (str) {
-        //       discuss at: http://locutus.io/php/rawurlencode/
-        //      original by: Brett Zamir (http://brett-zamir.me)
-        //         input by: travc
-        //         input by: Brett Zamir (http://brett-zamir.me)
-        //         input by: Michael Grier
-        //         input by: Ratheous
-        //      bugfixed by: Kevin van Zonneveld (http://kvz.io)
-        //      bugfixed by: Brett Zamir (http://brett-zamir.me)
-        //      bugfixed by: Joris
-        // reimplemented by: Brett Zamir (http://brett-zamir.me)
-        // reimplemented by: Brett Zamir (http://brett-zamir.me)
-        //           note 1: This reflects PHP 5.3/6.0+ behavior
-        //           note 1: Please be aware that this function expects \
-        //           note 1: to encode into UTF-8 encoded strings, as found on
-        //           note 1: pages served as UTF-8
-        //        example 1: rawurlencode('Kevin van Zonneveld!')
-        //        returns 1: 'Kevin%20van%20Zonneveld%21'
-        //        example 2: rawurlencode('http://kvz.io/')
-        //        returns 2: 'http%3A%2F%2Fkvz.io%2F'
-        //        example 3: rawurlencode('http://www.google.nl/search?q=Locutus&ie=utf-8')
-        //        returns 3: 'http%3A%2F%2Fwww.google.nl%2Fsearch%3Fq%3DLocutus%26ie%3Dutf-8'
+class ContaoMultifileuploadBundle
+{
+    /**
+     *
+     * @param {string} str
+     * @returns {string}
+     */
+    static rawurlencode (str)
+    {
         str = (str + '');
-
-        // Tilde should be allowed unescaped in future versions of PHP (as reflected below),
-        // but if you want to reflect current
-        // PHP behavior, you would need to add ".replace(/~/g, '%7E');" to the following.
         return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
-    },
-    __extends = function (child, parent) {
+    }
+
+    /**
+     *
+     * @param child
+     * @param parent
+     * @returns {*}
+     * @private
+     */
+    static __extends (child, parent)
+    {
         for (let i in child) {
             if (child.hasOwnProperty(i)) {
                 parent[i] = child[i];
             }
         }
         return parent;
-    },
-    __getField = function (dropzone, name) {
+    }
+
+    /**
+     *
+     * @param dropzone
+     * @param name
+     * @returns {string|any|Element}
+     * @private
+     */
+    static __getField (dropzone, name)
+    {
         let fields = dropzone.element.querySelectorAll('input[name="' +
             (typeof name !== 'undefined' ? name + '_' : '') +
             dropzone.options.paramName + '"]');
@@ -53,31 +57,57 @@ let MultiFileUpload,
         }
 
         return 'undefined';
-    },
-    __registerOnClick = function (file, action) {
+    }
+
+    /**
+     *
+     * @param file
+     * @param action
+     * @returns {boolean}
+     * @private
+     */
+    static __registerOnClick (file, action)
+    {
         if (typeof action === 'undefined') return false;
         file.previewElement.setAttribute('onclick', action);
         file.previewElement.className = '' +
             file.previewElement.className + ' has-info';
-    },
-    camelize = function (str) {
+    }
+
+    /**
+     *
+     * @param {string} str
+     * @returns {*}
+     */
+    static camelize (str)
+    {
         return str.replace(/[\-_](\w)/g, function (match) {
             return match.charAt(1).toUpperCase();
         });
-    },
-    __submitOnChange = function (dropzone, callback) {
+    }
+
+    /**
+     *
+     * @param dropzone
+     * @param callback
+     * @private
+     */
+    static __submitOnChange (dropzone, callback)
+    {
         if (callback) {
 
             if (callback === 'this.form.submit()') {
-                document.createElement('form').submit.call(__getField(dropzone).form);
+                document.createElement('form').submit.call(ContaoMultifileuploadBundle.__getField(dropzone).form);
                 return;
             }
 
             let fn = Function(callback);
             fn();
         }
-    },
-    __defaults = {
+    }
+}
+
+let __defaults = {
         init: function () {
             // listeners
             this.on('thumbnail', function (file, dataUrl) {
@@ -92,9 +122,9 @@ let MultiFileUpload,
             }).on('removedfile', function (file) {
                 // remove the file from the server on form submit (store deleted files in hidden _deleted field)
                 if (file.accepted) {
-                    let uploaded = __getField(this, 'uploaded'),
-                        deleted = __getField(this, 'deleted'),
-                        filesToSave = __getField(this);
+                    let uploaded = ContaoMultifileuploadBundle.__getField(this, 'uploaded'),
+                        deleted = ContaoMultifileuploadBundle.__getField(this, 'deleted'),
+                        filesToSave = ContaoMultifileuploadBundle.__getField(this);
                     if (typeof uploaded !== 'undefined' &&
                         typeof file.uuid !== 'undefined') {
                         let arrUploaded = JSON.parse(
@@ -132,7 +162,7 @@ let MultiFileUpload,
 
                     // submitOnChange support for multiple files only
                     if (this.options.maxFiles > 1) {
-                        __submitOnChange(this, this.options.onchange);
+                        ContaoMultifileuploadBundle.__submitOnChange(this, this.options.onchange);
                     }
                 }
 
@@ -158,8 +188,8 @@ let MultiFileUpload,
                     return false;
                 }
 
-                let uploaded = __getField(this, 'uploaded'),
-                    filesToSave = __getField(this),
+                let uploaded = ContaoMultifileuploadBundle.__getField(this, 'uploaded'),
+                    filesToSave = ContaoMultifileuploadBundle.__getField(this),
                     objHandler;
 
                 if (response instanceof Array) {
@@ -174,7 +204,7 @@ let MultiFileUpload,
                                 dropzone.emit('thumbnail', file,
                                     file.dataURL);
                             }
-                            __registerOnClick(file, file.info);
+                            ContaoMultifileuploadBundle.__registerOnClick(file, file.info);
                             break; // if file found break
                         }
                     }
@@ -188,11 +218,11 @@ let MultiFileUpload,
                             dropzone.emit('thumbnail', file,
                                 file.dataURL);
                         }
-                        __registerOnClick(file, file.info);
+                        ContaoMultifileuploadBundle.__registerOnClick(file, file.info);
                     }
                 }
 
-                __submitOnChange(dropzone,
+                ContaoMultifileuploadBundle.__submitOnChange(dropzone,
                     dropzone.options.onchange);
 
                 function persistFile(
@@ -224,7 +254,7 @@ let MultiFileUpload,
 
                     // save comparison of the encoded file names
                     if (response.filenameOrigEncoded ===
-                        rawurlencode(file.name) &&
+                        ContaoMultifileuploadBundle.rawurlencode(file.name) &&
                         response.uuid !==
                         'undefined') {
                         file.serverFileName = response.filename;
@@ -265,7 +295,7 @@ let MultiFileUpload,
                     });
             }).on('sending', function (file, xhr, formData) {
                 // append the whole form data
-                let field = __getField(this), form;
+                let field = ContaoMultifileuploadBundle.__getField(this), form;
 
                 if (typeof field !== 'undefined') {
                     form = field.form;
@@ -294,7 +324,7 @@ let MultiFileUpload,
             });
 
             // add mock files
-            let initialFiles = __getField(this, 'formattedInitial'),
+            let initialFiles = ContaoMultifileuploadBundle.__getField(this, 'formattedInitial'),
                 dropzone = this;
 
             if (typeof initialFiles !== 'undefined') {
@@ -314,7 +344,7 @@ let MultiFileUpload,
                     if (mock.dataURL) {
                         this.emit('thumbnail', mock, mock.dataURL);
                     }
-                    __registerOnClick(mock, mock.info);
+                    ContaoMultifileuploadBundle.__registerOnClick(mock, mock.info);
                     this.emit('complete', mock);
                 }
 
@@ -325,7 +355,7 @@ let MultiFileUpload,
         },
     };
 
-MultiFileUpload = {
+let MultiFileUpload = {
     init: function () {
         this.registerFields();
     },
@@ -351,7 +381,7 @@ MultiFileUpload = {
 
                 for (; n--;) {
                     if (/^data-.*/.test(attributes[n].name)) {
-                        let key = camelize(
+                        let key = ContaoMultifileuploadBundle.camelize(
                             attributes[n].name.replace('data-', ''));
                         data[key] = attributes[n].value;
                     }
@@ -367,7 +397,7 @@ MultiFileUpload = {
                     data[localizations[j]], '}.}', '}}');
             }
 
-            let config = __extends(data, __defaults);
+            let config = ContaoMultifileuploadBundle.__extends(data, __defaults);
 
             config.url = location.href;
 

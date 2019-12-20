@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2019-12-19
+- refactored bundled asset generation to encore
+- dropzone now included in bundle as own asset entry (version 5.5.1)
+- fixed an js excetion when upload field id contains invalid characters
+- fixed an typo in composer.json
+
 ## [1.1.7] - 2019-03-19
 
 #### Changed

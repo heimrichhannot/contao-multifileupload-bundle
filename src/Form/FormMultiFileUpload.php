@@ -96,6 +96,7 @@ class FormMultiFileUpload extends Upload
         $this->container->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
     }
 
+
     /**
      * @param DataContainer $dc
      *
@@ -688,4 +689,12 @@ class FormMultiFileUpload extends Upload
             'filenameSanitized' => $sanitizeFileName,
         ];
     }
+
+    public function generate()
+    {
+        $this->objUploader->id = $this->id;
+        return parent::generate();
+    }
+
+
 }

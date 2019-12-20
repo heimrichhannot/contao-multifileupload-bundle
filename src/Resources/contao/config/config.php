@@ -20,6 +20,7 @@ $GLOBALS['BE_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Wi
  * Hooks
  */
 $GLOBALS['TL_HOOKS']['executePostActions']['multifileupload'] = ['huh.multifileupload.listener.hooks', 'executePostActionsHook'];
+$GLOBALS['TL_HOOKS']['getAttributesFromDca']['huh_multifileupload'] = [\HeimrichHannot\MultiFileUploadBundle\EventListener\GetAttributesFromDcaListener::class, 'onGetAttributesFromDca'];
 
 /**
  * Ajax action
@@ -39,25 +40,14 @@ $GLOBALS['AJAX'][\HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload::
  */
 $GLOBALS['TL_COMPONENTS']['multifileupload'] = [
     'js'  => [
-        'assets/dropzone-latest/dist/min/dropzone.min.js|static',
-        'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static',
+        'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.js|static',
+        'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.js|static',
     ],
     'css' => [
-        'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static',
+        'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.css|screen|static',
     ],
 ];
 
-if (\Contao\System::getContainer()->get('huh.utils.container')->isFrontend()) {
-    $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static';
-
-    $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/min/dropzone.min.js|static';
-    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.min.js|static';
-}
-
-if (\Contao\System::getContainer()->get('huh.utils.container')->isBackend() && 'files' != \Contao\System::getContainer()->get('huh.request')->getGet('do')) {
-
-    $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/css/dropzone.min.css|screen|static';
-
-    $GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'assets/dropzone-latest/dist/dropzone.js|static';
-    $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/js/multifileupload.js|static';
-}
+$GLOBALS['TL_CSS']['dropzone']               = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.css|screen|static';
+$GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.js|static';
+$GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.js|static';

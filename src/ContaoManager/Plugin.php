@@ -12,12 +12,14 @@ use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
+use Contao\ManagerPlugin\Config\ConfigPluginInterface;
 use Contao\ManagerPlugin\Config\ContainerBuilder;
 use Contao\ManagerPlugin\Config\ExtensionPluginInterface;
 use HeimrichHannot\MultiFileUploadBundle\HeimrichHannotContaoMultiFileUploadBundle;
 use HeimrichHannot\UtilsBundle\Container\ContainerUtil;
+use Symfony\Component\Config\Loader\LoaderInterface;
 
-class Plugin implements BundlePluginInterface, ExtensionPluginInterface
+class Plugin implements BundlePluginInterface, ExtensionPluginInterface, ConfigPluginInterface
 {
     public function getBundles(ParserInterface $parser)
     {
@@ -51,5 +53,14 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface
             $extensionConfigs,
             __DIR__.'/../Resources/config/config_encore.yml'
         );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig)
+    {
+        $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/services.yml');
+        $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/hooks.yml');
     }
 }
