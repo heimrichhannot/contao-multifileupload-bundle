@@ -8,16 +8,8 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle;
 
-use HeimrichHannot\MultiFileUploadBundle\DependencyInjection\MultiFileUploadExtension;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class HeimrichHannotContaoMultiFileUploadBundle extends Bundle
 {
-    /**
-     * @return MultiFileUploadExtension
-     */
-    public function getContainerExtension()
-    {
-        return new MultiFileUploadExtension();
-    }
 }
