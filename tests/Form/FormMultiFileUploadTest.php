@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2019 Heimrich & Hannot GmbH
+ * Copyright (c) 2020 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -212,7 +212,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
             include_once __DIR__.'/../../vendor/contao/core-bundle/src/Resources/contao/helper/functions.php';
         }
 
-        if (!\interface_exists('uploadable')) {
+        if (!interface_exists('uploadable')) {
             include_once __DIR__.'/../../vendor/contao/core-bundle/src/Resources/contao/helper/interface.php';
         }
     }
@@ -1645,7 +1645,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
     protected function createTestFiles(array $files)
     {
         foreach ($files as $file) {
-            $result = fopen(TL_ROOT.'/files/'.$file, 'cb');
+            $result = fopen(TL_ROOT.'/files/'.$file, 'c');
         }
     }
 }

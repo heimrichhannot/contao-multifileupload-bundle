@@ -1,30 +1,32 @@
 <?php
-/**
- * Contao Open Source CMS
+
+/*
+ * Copyright (c) 2020 Heimrich & Hannot GmbH
  *
- * Copyright (c) 2019 Heimrich & Hannot GmbH
- *
- * @author  Thomas Körner <t.koerner@heimrich-hannot.de>
- * @license http://www.gnu.org/licences/lgpl-3.0.html LGPL
+ * @license LGPL-3.0-or-later
  */
 
-
 namespace HeimrichHannot\MultiFileUploadBundle\EventListener;
-
 
 use Contao\DataContainer;
 
 class GetAttributesFromDcaListener
 {
     /**
+     * @param array         $attributes
+     * @param DataContainer $dc
+     *
+     * @return array
+     *
      * @Hook("getAttributesFromDca")
      */
-    public function onGetAttributesFromDca(array $attributes, DataContainer $dc = null): array
+    public function onGetAttributesFromDca(array $attributes, $dc = null): array
     {
         if ('multifileupload' === $attributes['type']) {
             $attributes['id'] = $attributes['name'] = $attributes['strField'] =
                 preg_replace('~[^A-Z0-9]+([A-Z0-9]+)(?:[^A-Z0-9]+$)?~i', '_$1', $attributes['id']);
         }
+
         return $attributes;
     }
 }

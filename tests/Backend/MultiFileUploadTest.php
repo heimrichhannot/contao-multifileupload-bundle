@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2019 Heimrich & Hannot GmbH
+ * Copyright (c) 2020 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -172,7 +172,7 @@ class MultiFileUploadTest extends ContaoTestCase
         $container->set('huh.ajax.token', new AjaxTokenManager());
         System::setContainer($container);
 
-        if (!\interface_exists('uploadable')) {
+        if (!interface_exists('uploadable')) {
             include_once __DIR__.'/../../vendor/contao/core-bundle/src/Resources/contao/helper/interface.php';
         }
     }

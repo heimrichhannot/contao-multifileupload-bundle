@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2019 Heimrich & Hannot GmbH
+ * Copyright (c) 2020 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -513,7 +513,7 @@ class MultiFileUpload extends FileUpload
     /**
      * @param File $file
      *
-     * @return null|string
+     * @return string|null
      */
     protected function getInfoAction(File $file)
     {
@@ -541,7 +541,7 @@ class MultiFileUpload extends FileUpload
     /**
      * @param File $file
      *
-     * @return null|string
+     * @return string|null
      */
     protected function getPreviewImage(File $file)
     {
