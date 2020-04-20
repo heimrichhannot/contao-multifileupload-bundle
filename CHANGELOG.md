@@ -1,12 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.2.1] - 2020-01-07
+## [1.2.2] - 2020-04-20
+- fixed setting activeRecord in executePostActionsHook
 
+## [1.2.1] - 2020-01-07
 - fixed type hinting issue
 
 ## [1.2.0] - 2019-12-19
-
 - refactored bundled asset generation to encore
 - dropzone now included in bundle as own asset entry (version 5.5.1)
 - removed symfony/framework-bundle, heimrichhannot-contao-components/dropzone-latest and heimrichhannot/contao-components dependencies

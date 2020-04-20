@@ -63,7 +63,7 @@ class HookListener
         }
 
         if (null === $dc->activeRecord) {
-            $dc->activeRecord = $this->container->get('huh.utils.model')->findModelInstancesBy($dc->table, [$dc->table.'.id'], [$dc->id]);
+            $dc->activeRecord = $this->container->get('huh.utils.model')->findModelInstanceByPk($dc->table, $dc->id);
         }
 
         // add dca attributes and instantiate current object to set widget attributes
