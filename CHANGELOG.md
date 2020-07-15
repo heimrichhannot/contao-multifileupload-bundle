@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2020-07-15
+- add assets only where widget is included (also encore entry is added automatically, no need to add it manually anymore)
+- increased minimum encore version support to 1.5
+- moved parameters to own parameters.yml file
+
 ## [1.2.2] - 2020-04-20
 - fixed setting activeRecord in executePostActionsHook
 

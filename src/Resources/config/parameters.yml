@@ -1,0 +1,4 @@
+parameters:
+    huh.multifileupload.mime_theme_default: 'system/modules/multifileupload/assets/img/mimetypes/Numix-uTouch'
+    huh.multifileupload.upload_tmp: 'files/tmp'
+    huh.multifileupload.max_files_default: 10

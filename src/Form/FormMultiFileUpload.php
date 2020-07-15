@@ -21,6 +21,7 @@ use Contao\Upload;
 use Contao\Validator;
 use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
+use HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use Model\Collection;
@@ -81,6 +82,8 @@ class FormMultiFileUpload extends Upload
         }
 
         $this->objUploader = new MultiFileUpload($attributes, $this);
+
+        $this->container->get(FrontendAsset::class)->addFrontendAssets();
 
         $this->setVariables($attributes);
 

@@ -13,8 +13,8 @@
 /**
  * Front end form fields
  */
-$GLOBALS['TL_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload';
-$GLOBALS['BE_FFL']['multifileupload'] = 'HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload';
+$GLOBALS['TL_FFL']['multifileupload'] = \HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload::class;
+$GLOBALS['BE_FFL']['multifileupload'] = \HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload::class;
 
 /**
  * Hooks
@@ -47,7 +47,3 @@ $GLOBALS['TL_COMPONENTS']['multifileupload'] = [
         'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.css|screen|static',
     ],
 ];
-
-$GLOBALS['TL_CSS']['dropzone']               = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.css|screen|static';
-$GLOBALS['TL_JAVASCRIPT']['dropzone']        = 'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.js|static';
-$GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.js|static';

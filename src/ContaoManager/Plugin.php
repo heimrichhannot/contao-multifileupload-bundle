@@ -62,5 +62,6 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface, ConfigP
     {
         $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/services.yml');
         $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/hooks.yml');
+        $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/parameters.yml');
     }
 }

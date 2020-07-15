@@ -30,6 +30,9 @@
   "suggest": {
     "heimrichhannot/contao-encore-bundle": "Asset management with Symfony Encore."
   },
+  "conflict": {
+    "heimrichhannot/contao-encore-bundle": "<1.5"
+  },
   "autoload": {
     "psr-4": {
       "HeimrichHannot\\MultiFileUploadBundle\\": "src/"
