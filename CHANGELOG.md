@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2020-09-09
+- updated js dependencies
+
 ## [1.3.1] - 2020-09-09
 - fixed token error in contao 4.9
 

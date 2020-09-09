@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "licence": "LGPL-3.0-or-later",
   "dependencies": {
-    "dropzone": "^5.1",
-    "@hundh/contao-utils-bundle": "^1.15.0"
+    "@hundh/contao-utils-bundle": "^1.15.0",
+    "dropzone": "^5.1"
   },
   "devDependencies": {
-    "@symfony/webpack-encore": "^0.28",
+    "@symfony/webpack-encore": "^0.30",
+    "autoprefixer": "^9.1.5",
     "node-sass": "^4.12.0",
     "postcss-loader": "^3.0.0",
-    "sass-loader": "^7.1.0",
-    "autoprefixer": "^9.1.5"
+    "sass-loader": "^8.0"
   },
   "postcss": {
     "plugins": {
