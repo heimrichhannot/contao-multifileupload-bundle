@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2020-09-09
+- fixed token error in contao 4.9
+
 ## [1.3.0] - 2020-07-15
 - add assets only where widget is included (also encore entry is added automatically, no need to add it manually anymore)
 - increased minimum encore version support to 1.5

@@ -15,6 +15,7 @@ use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\Folder;
+use Contao\RequestToken;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Upload;
@@ -100,8 +101,6 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @param DataContainer $dc
-     *
      * @throws \Exception
      */
     public function moveFiles(DataContainer $dc)
@@ -201,7 +200,7 @@ class FormMultiFileUpload extends Upload
         $uuids = [];
         $varReturn = null;
         // check for the request token
-        if (!$request->hasPost('requestToken') || !\RequestToken::validate($request->getPost('requestToken'))) {
+        if (!$request->hasPost('requestToken') || !RequestToken::validate($request->getPost('requestToken'))) {
             $objResponse = new DropzoneErrorResponse();
             $objResponse->setMessage('Invalid Request Token!');
             $objResponse->output();
@@ -367,8 +366,6 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @param array $scheduledFiles
-     *
      * @return array
      */
     public function deleteScheduledFiles(array $scheduledFiles)
@@ -389,8 +386,6 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @param array $attributes
-     *
      * @return array
      */
     public function setAttributes(array $attributes)
@@ -431,9 +426,6 @@ class FormMultiFileUpload extends Upload
         return $attributes;
     }
 
-    /**
-     * @param array $attributes
-     */
     protected function isSingleFile(array $attributes)
     {
         // no database field (e.g. multi_column_editor)
@@ -453,9 +445,6 @@ class FormMultiFileUpload extends Upload
         }
     }
 
-    /**
-     * @param array $attributes
-     */
     protected function setVariables(array $attributes)
     {
         if (null !== $this->objUploader && \is_array($this->objUploader->getData())) {
@@ -531,8 +520,6 @@ class FormMultiFileUpload extends Upload
 
     /**
      * Validate the uploaded file.
-     *
-     * @param File $file
      *
      * @return string|bool The error message or false for no error
      */
@@ -677,10 +664,6 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * @param string $error
-     * @param string $originalFileNameEncoded
-     * @param string $sanitizeFileName
-     *
      * @return array
      */
     protected function prepareErrorArray(string $error, string $originalFileNameEncoded, string $sanitizeFileName)

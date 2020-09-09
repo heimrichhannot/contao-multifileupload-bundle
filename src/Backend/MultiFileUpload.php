@@ -16,6 +16,7 @@ use Contao\Environment;
 use Contao\File;
 use Contao\FileUpload;
 use Contao\FrontendTemplate;
+use Contao\RequestToken;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Widget;
@@ -280,9 +281,6 @@ class MultiFileUpload extends FileUpload
         return false;
     }
 
-    /**
-     * @param string $file
-     */
     public function addAllowedDownload(string $file)
     {
         $arrDownloads = System::getContainer()->get('session')->get(static::SESSION_ALLOWED_DOWNLOADS);
@@ -420,7 +418,7 @@ class MultiFileUpload extends FileUpload
 
         $this->createImageThumbnails = $this->createImageThumbnails ?: true;
 
-        $this->requestToken = System::getContainer()->get('security.csrf.token_manager')->getToken(System::getContainer()->getParameter('contao.csrf_token_name'))->getValue();
+        $this->requestToken = RequestToken::get();
 
         $this->previewsContainer = '#ctrl_'.$this->id.' .dropzone-previews';
 
@@ -438,8 +436,6 @@ class MultiFileUpload extends FileUpload
     /**
      * Return data attributes in correct syntax, considering doc type.
      *
-     * @param array $attributes
-     *
      * @return string
      */
     protected function getAttributes(array $attributes = [])
@@ -455,9 +451,6 @@ class MultiFileUpload extends FileUpload
 
     /**
      * Return html attribute in correct syntax, considering doc type.
-     *
-     * @param string $key
-     * @param string $value
      *
      * @return string
      */
@@ -511,8 +504,6 @@ class MultiFileUpload extends FileUpload
     }
 
     /**
-     * @param File $file
-     *
      * @return string|null
      */
     protected function getInfoAction(File $file)
@@ -539,8 +530,6 @@ class MultiFileUpload extends FileUpload
     }
 
     /**
-     * @param File $file
-     *
      * @return string|null
      */
     protected function getPreviewImage(File $file)
