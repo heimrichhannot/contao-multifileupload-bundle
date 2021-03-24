@@ -4,7 +4,7 @@
   "licence": "LGPL-3.0-or-later",
   "dependencies": {
     "@hundh/contao-utils-bundle": "^1.15.0",
-    "dropzone": "^5.1"
+    "dropzone": ">=5.1.0 <5.7.3"
   },
   "devDependencies": {
     "@symfony/webpack-encore": "^0.30",
