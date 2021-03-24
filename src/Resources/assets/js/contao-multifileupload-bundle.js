@@ -7,8 +7,6 @@ import '../scss/dropzone.scss';
 // // Disabling autoDiscover, otherwise Dropzone will try to attach twice.
 Dropzone.autoDiscover = false;
 
-// import {utilsBundle} from '@hundh/contao-utils-bundle';
-
 class ContaoMultifileuploadBundle
 {
     /**

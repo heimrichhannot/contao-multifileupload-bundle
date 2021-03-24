@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2021-03-24
+- set maximum dropzone version to 5.7.2, as higher versions currently no compatible
+
 ## [1.3.2] - 2020-09-09
 - updated js dependencies
 
