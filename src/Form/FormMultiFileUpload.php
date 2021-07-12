@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2021 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -159,6 +159,18 @@ class FormMultiFileUpload extends Upload
                 }
 
                 $target = $container->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
+                // delete file from database if file with same path do not exists
+                $databaseUtil = System::getContainer()->get('huh.utils.database');
+
+                // delete file from database if file with same path do not exists
+                if (null !== ($storedFiles = $databaseUtil->findResultsBy('tl_files', ['tl_files.path=?'], [$target]))) {
+                    foreach ($storedFiles->fetchAllAssoc() as $storedFile) {
+                        if (file_exists($storedFile['path'])) {
+                            continue;
+                        }
+                        $databaseUtil->delete('tl_files', 'tl_files.id=?', [$storedFile['id']]);
+                    }
+                }
 
                 if ($file->renameTo($target)) {
                     $arrTargets[] = $target;

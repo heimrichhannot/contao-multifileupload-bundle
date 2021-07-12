@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.4] - 2021-07-12
+- fixed fileupload when files were not in target directory anymore but still saved in database
+
 ## [1.3.3] - 2021-03-24
 - set maximum dropzone version to 5.7.2, as higher versions currently no compatible
 
