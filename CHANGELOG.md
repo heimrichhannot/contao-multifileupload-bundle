@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - 2021-07-16
+- refactored hooks into EventListener/Contao namespace
+- added missing dependencies
+- updated encore bundle integration
+
 ## [1.3.4] - 2021-07-12
 - fixed fileupload when files were not in target directory anymore but still saved in database
 

@@ -6,7 +6,7 @@
  * @license LGPL-3.0-or-later
  */
 
-namespace HeimrichHannot\MultiFileUploadBundle\EventListener;
+namespace HeimrichHannot\MultiFileUploadBundle\EventListener\Contao;
 
 use Contao\DataContainer;
 
@@ -20,7 +20,7 @@ class GetAttributesFromDcaListener
      *
      * @Hook("getAttributesFromDca")
      */
-    public function onGetAttributesFromDca(array $attributes, $dc = null): array
+    public function __invoke(array $attributes, $dc = null): array
     {
         if ('multifileupload' === $attributes['type']) {
             $attributes['id'] = $attributes['name'] = $attributes['strField'] =

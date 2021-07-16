@@ -1,9 +1,11 @@
 huh_encore:
-    js_entries:
-        - { name: contao-multifileupload-bundle, file: 'vendor/heimrichhannot/contao-multifileupload-bundle/src/Resources/assets/js/contao-multifileupload-bundle.js', requires_css: true }
-    unset_global_keys:
-        js:
-          - multifileupload
-          - dropzone
-        css:
-          - dropzone
+  js_entries:
+    - name: contao-multifileupload-bundle
+      file: 'vendor/heimrichhannot/contao-multifileupload-bundle/src/Resources/assets/js/contao-multifileupload-bundle.js'
+      requires_css: true
+  unset_global_keys:
+    js:
+      - multifileupload
+      - dropzone
+    css:
+      - dropzone
