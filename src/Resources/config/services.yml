@@ -11,6 +11,6 @@ services:
     calls:
       - [ setEncoreFrontendAsset, [ '@?HeimrichHannot\EncoreBundle\Asset\FrontendAsset' ] ]
 
-  HeimrichHannot\MultiFileUploadBundle\EventListener\:
+  HeimrichHannot\MultiFileUploadBundle\EventListener\Contao\:
     resource: '../../EventListener/Contao/*'
     public: true

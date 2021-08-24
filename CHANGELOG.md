@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 - refactored hooks into EventListener/Contao namespace
 - added missing dependencies
 - updated encore bundle integration
+- increased minimum php version to 7.2
 
 ## [1.3.4] - 2021-07-12
 - fixed fileupload when files were not in target directory anymore but still saved in database

@@ -22,7 +22,7 @@ use HeimrichHannot\RequestBundle\Component\HttpFoundation\Request;
 use HeimrichHannot\UtilsBundle\Model\ModelUtil;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * @Hook("executePostActions")
@@ -32,7 +32,7 @@ class ExecutePostActionsListener
     /** @var Request */
     protected $request;
 
-    /** @var Session */
+    /** @var SessionInterface */
     protected $session;
 
     /** @var LoggerInterface */
@@ -47,7 +47,7 @@ class ExecutePostActionsListener
     /**
      * ExecutePostActionsListener constructor.
      */
-    public function __construct(Request $request, Session $session, LoggerInterface $logger, ModelUtil $modelUtil, ContaoFramework $framework)
+    public function __construct(Request $request, SessionInterface $session, LoggerInterface $logger, ModelUtil $modelUtil, ContaoFramework $framework)
     {
         $this->request = $request;
         $this->session = $session;
