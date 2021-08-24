@@ -24,6 +24,7 @@ use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
 use HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Exception\InvalidImageException;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use Model\Collection;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -240,8 +241,9 @@ class FormMultiFileUpload extends Upload
                 $output = new NullOutput();
                 $application->run($input, $output);
             } catch (\Exception $e) {
+                System::getContainer()->get('logger')->error('Error at running symlink command: '.$e->getMessage(), ['code' => $e->getCode()]);
                 $objResponse = new DropzoneErrorResponse();
-                $objResponse->setMessage('Error at running symlink command: '.$e->getMessage());
+                $objResponse->setMessage('There was an error while uploading the file. Please contact the system administrator. Error Code: '.$e->getCode());
                 $objResponse->output();
             }
         }
@@ -486,12 +488,12 @@ class FormMultiFileUpload extends Upload
         $strExtension = strtolower($objUploadFile->getClientOriginalExtension());
 
         if (!$strExtension || !\is_array($arrAllowed) || !\in_array($strExtension, $arrAllowed)) {
-            return sprintf(sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $strExtension));
+            return sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $strExtension);
         }
 
         // compare client mime type with mime type check result from server (e.g. user uploaded a php file with jpg extension)
         if (!$this->validateMimeType($objUploadFile->getClientMimeType(), $objUploadFile->getMimeType())) {
-            return sprintf(sprintf($GLOBALS['TL_LANG']['ERR']['illegalMimeType'], $objUploadFile->getMimeType()));
+            return sprintf($GLOBALS['TL_LANG']['ERR']['illegalMimeType'], $objUploadFile->getMimeType());
         }
 
         return $error;
@@ -531,40 +533,6 @@ class FormMultiFileUpload extends Upload
     }
 
     /**
-     * Validate the uploaded file.
-     *
-     * @return string|bool The error message or false for no error
-     */
-    protected function validateUpload(File $file)
-    {
-        if ($file->isImage && null !== $this->minImageWidth && null !== $this->minImageHeight && null !== $this->maxImageWidth && null !== $this->maxImageHeight) {
-            $minWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageWidth);
-            $minHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->minImageHeight);
-
-            $maxWidth = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageWidth);
-            $maxHeight = System::getContainer()->get('huh.utils.image')->getPixelValue($this->maxImageHeight);
-
-            if ($minWidth > 0 && $file->width < $minWidth) {
-                return sprintf($this->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $file->width);
-            }
-
-            if ($minHeight > 0 && $file->height < $minHeight) {
-                return sprintf($this->minImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $file->height);
-            }
-
-            if ($maxWidth > 0 && $file->width > $maxWidth) {
-                return sprintf($this->maxImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxWidth'], $maxWidth, $file->width);
-            }
-
-            if ($maxHeight > 0 && $file->height > $maxHeight) {
-                return sprintf($this->maxImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['maxHeight'], $maxHeight, $file->height);
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Upload a file, store to $uploadFile and create database entry.
      *
      * @param UploadedFile $uploadFile   UploadedFile        The uploaded file object
@@ -588,6 +556,12 @@ class FormMultiFileUpload extends Upload
 
         if (false !== ($error = $this->validateExtension($uploadFile))) {
             return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
+        }
+
+        try {
+            $this->validateImageSize($uploadFile);
+        } catch (InvalidImageException $e) {
+            return $this->prepareErrorArray($e->getMessage(), $originalFileNameEncoded, $sanitizeFileName);
         }
 
         $targetFileName = $container->get('huh.utils.file')->addUniqueIdToFilename($sanitizeFileName, static::UNIQID_PREFIX);
@@ -626,10 +600,6 @@ class FormMultiFileUpload extends Upload
             @unlink(TL_ROOT.'/'.$relativePath);
 
             return $this->prepareErrorArray($GLOBALS['TL_LANG']['ERR']['outsideUploadDirectory'], $originalFileNameEncoded, $sanitizeFileName);
-        }
-
-        if (false !== ($error = $this->validateUpload($file))) {
-            return $this->prepareErrorArray($error, $originalFileNameEncoded, $sanitizeFileName);
         }
 
         // validateUploadCallback
@@ -685,5 +655,33 @@ class FormMultiFileUpload extends Upload
             'filenameOrigEncoded' => $originalFileNameEncoded,
             'filenameSanitized' => $sanitizeFileName,
         ];
+    }
+
+    private function validateImageSize(UploadedFile $upload)
+    {
+        $minWidth = $this->minImageWidth ?? 0;
+        $minHeight = $this->minImageHeight ?? 0;
+        $maxWidth = $this->maxImageWidth ?? Config::get('imageWidth') ?? 0;
+        $maxHeight = $this->maxImageHeight ?? Config::get('imageHeight') ?? 0;
+
+        if ($imageSize = @getimagesize($upload->getPathname())) {
+            if ($minWidth > 0 && $imageSize[0] < $minWidth) {
+                throw new InvalidImageException(sprintf($this->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $imageSize[0]));
+            }
+
+            if ($minHeight > 0 && $imageSize[1] < $minHeight) {
+                throw new InvalidImageException(sprintf($this->minImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $imageSize[1]));
+            }
+
+            // Image exceeds maximum image width
+            if ($maxWidth > 0 && $imageSize[0] > $maxWidth) {
+                throw new InvalidImageException(sprintf($GLOBALS['TL_LANG']['ERR']['filewidth'], $upload->getClientOriginalName(), $maxWidth));
+            }
+
+            // Image exceeds maximum image height
+            if ($maxHeight > 0 && $imageSize[1] > $maxHeight) {
+                throw new InvalidImageException(sprintf($GLOBALS['TL_LANG']['ERR']['fileheight'], $upload->getClientOriginalName(), $maxHeight));
+            }
+        }
     }
 }
