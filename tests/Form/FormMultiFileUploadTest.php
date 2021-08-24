@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2021 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -66,7 +66,7 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $fs->remove(TL_ROOT);
     }
 
-    public function setUp()
+    protected function setUp()
     {
         global $objPage;
 
@@ -487,82 +487,8 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $this->assertNull($class->deleteScheduledFiles(['files']));
     }
 
-    public function testValidateUpload()
-    {
-        $GLOBALS['TL_LANG']['ERR']['minWidth'] = 'Die Breite des Bildes darf %s Pixel nicht unterschreiten (aktuelle Bildbreite: %s Pixel).';
-        $GLOBALS['TL_LANG']['ERR']['minHeight'] = 'Die Höhe des Bildes darf %s Pixel nicht unterschreiten (aktuelle Bildhöhe: %s Pixel).';
-        $GLOBALS['TL_LANG']['ERR']['maxWidth'] = 'Die Breite des Bildes darf %s Pixel nicht überschreiten (aktuelle Bildbreite: %s Pixel).';
-        $GLOBALS['TL_LANG']['ERR']['maxHeight'] = 'Die Höhe des Bildes darf %s Pixel nicht überschreiten (aktuelle Bildhöhe: %s Pixel).';
-
-        $arrDca = [
-            'label' => 'label',
-            'inputType' => 'multifileupload',
-            'eval' => [
-                'uploadFolder' => TL_ROOT.'/files/uploads/',
-                'extensions' => 'csv',
-                'fieldType' => 'radio',
-                'submitOnChange' => false,
-                'onchange' => '',
-                'allowHtml' => false,
-                'rte' => '',
-                'preserveTags' => '',
-                'sql' => 'varchar(255)',
-                'encrypt' => false,
-            ],
-            'options_callback' => '',
-            'options' => '',
-            'isSubmitCallback' => true,
-            'exclude' => true,
-        ];
-        $arrAttributes = Widget::getAttributesFromDca($arrDca, 'files', null, 'title', 'tl_files');
-        $class = new FormMultiFileUpload($arrAttributes);
-
-        $file = $this->mockClassWithProperties(File::class, ['isImage' => false]);
-
-        $function = $this->getMethod(FormMultiFileUpload::class, 'validateUpload');
-        $this->assertFalse($function->invokeArgs($class, [$file]));
-
-        $imageUtils = $this->mockAdapter(['getPixelValue']);
-        $imageUtils->method('getPixelValue')->willReturn(1);
-        $container = System::getContainer();
-        $container->set('huh.utils.image', $imageUtils);
-        System::setContainer($container);
-
-        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 10]);
-        $this->assertSame('Die Breite des Bildes darf 1 Pixel nicht überschreiten (aktuelle Bildbreite: 10 Pixel).', $function->invokeArgs($class, [$file]));
-
-        $imageUtils = $this->mockAdapter(['getPixelValue']);
-        $imageUtils->method('getPixelValue')->willReturn(11);
-        $container = System::getContainer();
-        $container->set('huh.utils.image', $imageUtils);
-        System::setContainer($container);
-
-        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 10]);
-        $this->assertSame('Die Breite des Bildes darf 11 Pixel nicht unterschreiten (aktuelle Bildbreite: 10 Pixel).', $function->invokeArgs($class, [$file]));
-
-        $imageUtils = $this->mockAdapter(['getPixelValue']);
-        $imageUtils->method('getPixelValue')->willReturn(5);
-        $container = System::getContainer();
-        $container->set('huh.utils.image', $imageUtils);
-        System::setContainer($container);
-
-        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 10, 'height' => 4]);
-        $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht unterschreiten (aktuelle Bildhöhe: 4 Pixel).', $function->invokeArgs($class, [$file]));
-
-        $imageUtils = $this->mockAdapter(['getPixelValue']);
-        $imageUtils->method('getPixelValue')->willReturn(5);
-        $container = System::getContainer();
-        $container->set('huh.utils.image', $imageUtils);
-        System::setContainer($container);
-
-        $file = $this->mockClassWithProperties(File::class, ['isImage' => true, 'width' => 5, 'height' => 6]);
-        $this->assertSame('Die Höhe des Bildes darf 5 Pixel nicht überschreiten (aktuelle Bildhöhe: 6 Pixel).', $function->invokeArgs($class, [$file]));
-    }
-
     /**
      * test upload controller against cross-site request.
-     *
-     * @test
      */
     public function testUploadHTMLInjection()
     {
@@ -639,8 +565,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
     /**
      * test upload controller against cross-site request.
-     *
-     * @test
      */
     public function testInvalidAjaxUploadToken()
     {
@@ -757,8 +681,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
     /**
      * test upload controller against cross-site disk flooding.
-     *
-     * @test
      */
     public function testDiskFlooding()
     {
@@ -859,9 +781,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
         }
     }
 
-    /**
-     * @test
-     */
     public function testSanitizeFileNames()
     {
         $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
@@ -967,9 +886,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $this->assertSame('file-name.zip', $data[5]['filenameSanitized']);
     }
 
-    /**
-     * @test
-     */
     public function testMaliciousFileUploadOfInvalidCharactersInFileName()
     {
         file_put_contents(TL_ROOT.'/files/საბეჭდი_მანქანა.png', 'Testfile');
@@ -1094,9 +1010,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $this->assertSame('_.png', $data['filenameSanitized']);
     }
 
-    /**
-     * @test
-     */
     public function testUploadCSVFile()
     {
         $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
@@ -1213,9 +1126,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
         $this->assertSame(200, $result->getStatusCode());
     }
 
-    /**
-     * @test
-     */
     public function testMaliciousFileUploadOfDisguisedPhpFile()
     {
         $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
@@ -1294,9 +1204,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
         }
     }
 
-    /**
-     * @test
-     */
     public function testMaliciousFileUploadOfInvalidTypes()
     {
         $objRequest = \Symfony\Component\HttpFoundation\Request::create('http://localhost'.$this->ajaxAction->generateUrl(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD), 'post');
@@ -1639,8 +1546,6 @@ class FormMultiFileUploadTest extends ContaoTestCase
 
     /**
      * creates files for tests.
-     *
-     * @param array $files
      */
     protected function createTestFiles(array $files)
     {
