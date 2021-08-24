@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.5] - 2021-08-24
+- Fixed: image size check for uploaded images not working
+
 ## [1.3.4] - 2021-07-12
 - fixed fileupload when files were not in target directory anymore but still saved in database
 
