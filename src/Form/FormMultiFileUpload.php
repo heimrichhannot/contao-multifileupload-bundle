@@ -15,6 +15,7 @@ use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\Folder;
+use Contao\Input;
 use Contao\RequestToken;
 use Contao\StringUtil;
 use Contao\System;
@@ -309,6 +310,8 @@ class FormMultiFileUpload extends Upload
      */
     public function validator($input)
     {
+        $input = Input::decodeEntities($input);
+
         if ('' === $input || '[]' === $input) {
             $input = '[]';
         }
