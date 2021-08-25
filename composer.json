@@ -15,7 +15,8 @@
   "require": {
     "php": "^7.1",
     "contao/core-bundle": "^4.4",
-    "heimrichhannot/contao-ajax-bundle": "^1.0"
+    "heimrichhannot/contao-ajax-bundle": "^1.0",
+    "heimrichhannot/contao-utils-bundle": "^2.90"
   },
   "require-dev": {
     "contao/test-case": "1.1.*",

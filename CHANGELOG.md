@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.6] - 2021-08-25
+- Fixed: dca images size attributes not properly evaluated for image size check
+- Fixed: missing utils bundle dependency
+
 ## [1.3.5] - 2021-08-24
 - Fixed: image size check for uploaded images not working
 

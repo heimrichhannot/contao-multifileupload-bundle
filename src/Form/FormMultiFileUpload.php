@@ -26,6 +26,7 @@ use HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Exception\InvalidImageException;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
+use HeimrichHannot\UtilsBundle\Image\ImageUtil;
 use Model\Collection;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -404,6 +405,22 @@ class FormMultiFileUpload extends Upload
      */
     public function setAttributes(array $attributes)
     {
+        if (isset($attributes['minImageWidth']) && !\is_int($attributes['minImageWidth'])) {
+            $attributes['minImageWidth'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['minImageWidth']);
+        }
+
+        if (isset($attributes['maxImageWidth']) && !\is_int($attributes['maxImageWidth'])) {
+            $attributes['maxImageWidth'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['maxImageWidth']);
+        }
+
+        if (isset($attributes['minImageHeight']) && !\is_int($attributes['minImageHeight'])) {
+            $attributes['minImageHeight'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['minImageHeight']);
+        }
+
+        if (isset($attributes['maxImageHeight']) && !\is_int($attributes['maxImageHeight'])) {
+            $attributes['maxImageHeight'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['maxImageHeight']);
+        }
+
         if (isset($attributes['strTable']) && '' !== $attributes['strTable']) {
             $this->isSingleFile($attributes);
         }
