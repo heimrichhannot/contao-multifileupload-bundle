@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2021 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -16,6 +16,7 @@ use Contao\Environment;
 use Contao\File;
 use Contao\FileUpload;
 use Contao\FrontendTemplate;
+use Contao\Message;
 use Contao\RequestToken;
 use Contao\StringUtil;
 use Contao\System;
@@ -82,7 +83,7 @@ class MultiFileUpload extends FileUpload
             if (!$this->isAllowedDownload($file)) {
                 header('HTTP/1.1 403 Forbidden');
 
-                die('No file access.');
+                exit('No file access.');
             }
 
             /** @var Controller $controller */
@@ -370,7 +371,7 @@ class MultiFileUpload extends FileUpload
         // throw maximum upload size exceptions only in back end for admins/developer
         if (null !== $strError) {
             if (System::getContainer()->get('huh.utils.container')->isBackend() && System::getContainer()->get('contao.framework')->createInstance(BackendUser::class)->isAdmin) {
-                throw new \Exception($strError);
+                Message::addError($strError);
             }
             System::getContainer()->get('monolog.logger.contao')->log(TL_ERROR, $strError);
         }
