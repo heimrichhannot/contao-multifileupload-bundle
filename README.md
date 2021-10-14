@@ -105,6 +105,7 @@ thumbnailHeight | 90 | The thumbnail height (in px) of the uploaded file preview
 labels | array() | Overwrite the head and body labels within the upload field.
 skipDeleteAfterSubmit | false | Prevent file removal from filesystem.
 hideLabel | false | Hide widget label (Frontend)
+mimeTypes | `null` | A comma separated list of allowed mime types (e.g. `'application/x-compressed,application/x-zip-compressed,application/zip,multipart/x-zip'`). Set to empty string `''` if you don't want to restrict mime types. Set to `null` if you just want to restrict mime types if they differ while automatic detection.
 
 
 ### Field Callbacks
