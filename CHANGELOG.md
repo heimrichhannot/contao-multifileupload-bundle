@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2021-10-18
+- Added: option to configure allowed mime type ([#31], thanks to [@rabaus])
+- Added: support for dropzone timeout option ([#32], thanks to [@rabaus])
+
 ## [1.4.1] - 2021-10-13
 - Fixed: exception when invalid upload size configuration (now shows warning message instead)
 
@@ -209,3 +213,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - initial version
+
+[#32]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/32
+[#31]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/31
+[@rabaus]: https://github.com/rabauss
