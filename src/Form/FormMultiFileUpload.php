@@ -527,6 +527,18 @@ class FormMultiFileUpload extends Upload
      */
     protected function validateMimeType($mimeClient, $mimeDetected)
     {
+        $allowedMimeTypes = null !== $this->mimeTypes ? StringUtil::trimsplit(',', $this->mimeTypes) : null;
+
+        if (\is_array($allowedMimeTypes)) {
+            if (empty($allowedMimeTypes)) {
+                return true;
+            }
+            if (\in_array($mimeDetected, $allowedMimeTypes, true)) {
+                return true;
+            }
+            return false;
+        }
+
         if ($mimeClient !== $mimeDetected) {
             // allow safe mime types
             switch ($mimeDetected) {
