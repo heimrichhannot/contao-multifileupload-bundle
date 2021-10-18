@@ -213,6 +213,7 @@ class MultiFileUpload extends FileUpload
             case 'thumbnailWidth':
             case 'thumbnailHeight':
             case 'previewsContainer':
+            case 'timeout':
                 $varValue = $this->data[$key];
 
                 break;
