@@ -33,66 +33,102 @@ Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com
 
 ### Usage
 
-Set the inputType to `multifileupload`. It can be used in frontend and backend. 
+Create a widget of inputType `multifileupload`. It is usable in the contao backend or in the contao frontend in combination with [Formhybrid](https://github.com/heimrichhannot/contao-formhybrid).
 
+```php
+$GLOBALS['TL_DCA']['tl_example']['fields']['example_upload'] = [
+    'inputType' => 'multifileupload',
+    'eval'      => [
+        'extensions'     => string, # A comma-seperated list of allowed file types (e.g. "jpg,png"). Default: 'Config::get('uploadTypes')'
+        'fieldType'      => ['radio'|'checkbox'], # Use radio for single file upload, checkbox for multi file upload
+        'uploadFolder'   => array|string|callable, # Set the folder where uploaded files are stored after submission. Can be a static string (e.g. 'files/upload') or a callback function.
+        'maxFiles'       => int, # Maximum number of files that can be uploaded. Works only if multi file upload is allowed (see fieldType). Default: 10
+        'maxUploadSize'  => int|string, # Maximum upload size in byte, KiB ("100K"), MiB ("4M") or GiB ("1G"). Default: minimum from Config::get('maxFileSize') and ini_get('upload_max_filesize')
+        'minImageWidth'  => int, # Minimum image width in pixel. Default: 0
+        'minImageHeight' => int, # Minimum image height in pixel. Default: 0
+        'maxImageWidth'  => int, # Maximum image width in pixel. Default: Config::get('imageWidth')
+        'maxImageHeight' => int, # Maximum image height in pixel. Default: Config::get('imageHeight')
+        'labels'         => [ # Optional. Custom text that will be placed in the dropzone field. Typically a reference to the global language array.
+            'head' => string,
+            'body' => string ,
+        ],
+        'skipDeleteAfterSubmit' => boolean, # Prevent file removal from filesystem. Default false
+    ],
+    'uploadPathCallback' => [[MyUploadCallback::class, 'onUploadPathCallback']],
+    'validateUploadCallback' => [[MyUploadCallback::class, 'onValidateUploadCallback']],
+    'sql'       => "blob NULL",
+];
 ```
-'client_logo' => [
-    'label'     => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo'],
-    'exclude'   => true,
+
+Example for simple single image file upload:
+
+```php
+$GLOBALS['TL_DCA']['tl_example']['fields']['example_upload'] = [
     'inputType' => 'multifileupload',
     'eval'      => [
         'tl_class'      => 'clr',
         'extensions'    => Config::get('validImageTypes'),
-        'filesOnly'     => true,
         'fieldType'     => 'radio',
-        'addRemoveLinks' => true,
-        'minImageWidth'       => '600px',
-        'minImageHeight'      => '300px',
-        'maxImageWidth'       => '1600px',
-        'maxImageHeight'      => '1200px',
-        'multipleFiles' => false,
-        'labels'        => [
-            'head' => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo']['messageText'][0],
-            'body' => &$GLOBALS['TL_LANG']['tl_jobmarket_job']['client_logo']['messageText'][1],
-        ],
-        'skipDeleteAfterSubmit' => true
+        'uploadFolder'        => 'files/uploads'
     ],
-    'uploadPathCallback' => [['MyClass', 'getJobUploadPath']],
-    'validateUploadCallback' => [['MyClass', 'validateUpload']],
     'sql'       => "blob NULL",
-],
+];
 ```
 
-If you want the multifileupload widget to be replaced by fileTree in backend, you can use the following code:
+Example for simple multiple image file upload:
 
 ```php
-'client_logo' => [
-    'inputType' => TL_MODE == 'BE' ? 'fileTree' : 'multifileupload'
-]
+$GLOBALS['TL_DCA']['tl_example']['fields']['example_upload'] = [
+    'inputType' => 'multifileupload',
+    'eval'      => [
+        'tl_class'       => 'clr',
+        'extensions'     => Config::get('validImageTypes'),
+        'fieldType'      => 'checkbox',
+        'uploadFolder'   => 'files/uploads'
+    ],
+    'sql'       => "blob NULL",
+];
+```
+
+Example for multi image upload with additional config (maximum 5 files with custom image size):
+
+```php
+$GLOBALS['TL_DCA']['tl_example']['fields']['example_upload'] = [
+    'inputType' => 'multifileupload',
+    'eval'      => [
+        'tl_class'       => 'clr',
+        'extensions'     => Config::get('validImageTypes'),
+        'fieldType'      => 'checkbox',
+        'maxFiles'       => 5,
+        'minImageWidth'  => 600,
+        'minImageHeight' => 300,
+        'maxImageWidth'  => 1600,
+        'maxImageHeight' => 1200,
+        'uploadFolder'   => 'files/uploads'
+    ],
+    'sql'       => "blob NULL",
+];
 ```
 
 ## Documentation
+
+### Supported dropzone config options
+
+The bundles support most dropzone config options. Just pass them as eval attribute. See [Dropzone Documentation](https://docs.dropzone.dev/configuration/basics/configuration-options) for more information. Some additional node:
+
+* `addRemoveLinks` (boolean, default true): If true, this will add a link to every file preview to remove or cancel (if already uploading) the file.
+* `maxFilesize`: Is set by `maxUploadSize` eval property 
 
 ### Flow chart
 
 A flowchart with description of the full upload procedure with callback injection can be found here: [Flowchart](http://htmlpreview.github.io/?https://github.com/heimrichhannot/contao-multifileupload-bundle/blob/master/doc/upload-flow-chart.html).
 
-### Eval-Properties
+### Additional eval properties
 
-Defined at your field's dca.
+Additional properties can be set in your fields eval section.
 
 Name          | Default    | Description
 ------------- | ---------- | -----------
-fieldType     | 'checkbox' | If set to "checkbox", multiple files can be uploaded, for single upload set to 'radio'
-extensions    | \Config::get('uploadTypes') | A comma separated list of allowed file types (e.g. "jpg,png")
-maxUploadSize | minimum of $GLOBALS['TL_CONFIG']['maxFileSize'] and php.ini 'upload_max_filesize' | The desired maximum upload size measured in Bytes (e.g. "100"), KiB, MiB or GiB (e.g. "10M"). Can not exceed $GLOBALS['TL_CONFIG']['maxFileSize'] or php upload_max_filesize value.
-maxFiles      | 10 | The maximum file count per field
-uploadFolder  | null | The upload folder as String, e.g. "files/uploads", function or array. **(must be declared !!!)**, required to move files to correct destination after submission.
-addRemoveLinks | true | Remove links are added to each of the file avatars in the jquery (caption can be overwritten within language files)
-minImageWidth | 0 | The minimum image width. Set to 0 for no min width image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
-minImageHeight | 0 | The minimum image height. Set to 0 for no min height image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
-maxImageWidth | 0 | The maximum image width. Set to 0 for no max width image validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
-maxImageHeight | 0 | The maximum image height. Set to 0 for no max image height validation. All units from \HeimrichHannot\UtilsBundle\Image\ImageUtil::getPixelValue() are supported.
 minImageWidthErrorText | $GLOBALS['TL_LANG']['ERR']['minWidth'] | Custom error message for minimum image width. (arguments provided: 1 - minimum width from config, 2 - current image width)
 minImageHeightErrorText | $GLOBALS['TL_LANG']['ERR']['minHeight'] | Custom error message for minimum image height. (arguments provided: 1 - minimum height from config, 2 - current image height)
 maxImageWidthErrorText | $GLOBALS['TL_LANG']['ERR']['maxWidth'] | Custom error message for maximum image width. (arguments provided: 1 - maximum width from config, 2 - current image width)
@@ -102,8 +138,6 @@ mimeFolder | system/modules/multifileupload/assets/img/mimetypes/Numix-uTouch | 
 mimeThumbnailsOnly | boolean(false) | Set to true if you want to show mime image thumbnails only, and no image preview at all. (performance improvement)
 thumbnailWidth | 90 | The thumbnail width (in px) of the uploaded file preview within the dropzone preview container.
 thumbnailHeight | 90 | The thumbnail height (in px) of the uploaded file preview within the dropzone preview container.
-labels | array() | Overwrite the head and body labels within the upload field.
-skipDeleteAfterSubmit | false | Prevent file removal from filesystem.
 hideLabel | false | Hide widget label (Frontend)
 mimeTypes | `null` | A comma separated list of allowed mime types (e.g. `'application/x-compressed,application/x-zip-compressed,application/zip,multipart/x-zip'`). Set to empty string `''` if you don't want to restrict mime types. Set to `null` if you just want to restrict mime types if they differ while automatic detection.
 timeout | null| Dropzone Request timeout in milliseconds. See [Documentation](https://docs.dropzone.dev/configuration/basics/configuration-options)

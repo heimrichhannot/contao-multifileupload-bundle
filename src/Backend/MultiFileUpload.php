@@ -328,16 +328,18 @@ class MultiFileUpload extends FileUpload
 
     protected function getByteSize($size)
     {
-        // Convert the value to bytes
-        if (false !== stripos($size, 'K')) {
-            $size = round(explode('K', $size)[0] * 1024);
-        } elseif (false !== stripos($size, 'M')) {
-            $size = round(explode('M', $size)[0] * 1024 * 1024);
-        } elseif (false !== stripos($size, 'G')) {
-            $size = round(explode('G', $size)[0] * 1024 * 1024 * 1024);
+        if (!is_int($size)) {
+            // Convert the value to bytes
+            if (false !== stripos($size, 'K')) {
+                $size = round(explode('K', $size)[0] * 1024);
+            } elseif (false !== stripos($size, 'M')) {
+                $size = round(explode('M', $size)[0] * 1024 * 1024);
+            } elseif (false !== stripos($size, 'G')) {
+                $size = round(explode('G', $size)[0] * 1024 * 1024 * 1024);
+            }
         }
 
-        return $size;
+        return (int)$size;
     }
 
     /**

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2021-11-16
+- Changed: enhanced max file size calculation
+- Changed: enhanced readme
+
 ## [1.5.0] - 2021-10-18
 - Added: option to configure allowed mime type ([#31], thanks to [@rabaus])
 - Added: support for dropzone timeout option ([#32], thanks to [@rabaus])
