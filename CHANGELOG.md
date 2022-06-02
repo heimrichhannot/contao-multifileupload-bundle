@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2022-06-02
+- Fixed: warnings in php 8
+
 ## [1.5.1] - 2021-11-16
 - Changed: enhanced max file size calculation
 - Changed: enhanced readme

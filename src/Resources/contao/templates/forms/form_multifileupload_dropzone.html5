@@ -23,9 +23,9 @@
         </div>
         <div class="dz-container">
             <div class="dz-default dz-message">
-                <span class="dz-message-head"><?= $this->labels['head']; ?></span>
-                <span class="dz-message-body"><?= $this->labels['body']; ?></span>
-                <span class="dz-message-foot"><?= $this->labels['foot']; ?></span>
+                <span class="dz-message-head"><?= $this->labels['head'] ?? ''; ?></span>
+                <span class="dz-message-body"><?= $this->labels['body'] ?? ''; ?></span>
+                <span class="dz-message-foot"><?= $this->labels['foot'] ?? ''; ?></span>
             </div>
             <div class="dropzone-previews"></div>
         </div>
