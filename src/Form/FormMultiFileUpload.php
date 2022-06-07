@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2021 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -81,7 +81,7 @@ class FormMultiFileUpload extends Upload
         parent::__construct($attributes);
 
         // form generator fix, here the id of the field is
-        if (is_numeric($attributes['id'])) {
+        if (is_numeric($attributes['id'] ?? '')) {
             $attributes['id'] = $attributes['name'];
         }
 
@@ -93,7 +93,7 @@ class FormMultiFileUpload extends Upload
 
         if ($this->strTable) {
             // add onsubmit_callback at first onsubmit_callback position: move files after form submission
-            if (\is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'])) {
+            if (\is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] ?? null)) {
                 $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']] + $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'];
             } else {
                 $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']];
@@ -533,9 +533,11 @@ class FormMultiFileUpload extends Upload
             if (empty($allowedMimeTypes)) {
                 return true;
             }
+
             if (\in_array($mimeDetected, $allowedMimeTypes, true)) {
                 return true;
             }
+
             return false;
         }
 

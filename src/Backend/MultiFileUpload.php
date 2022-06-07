@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2021 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -93,7 +93,9 @@ class MultiFileUpload extends FileUpload
 
         global $objPage;
 
-        $this->isXhtml = ('xhtml' === $objPage->outputFormat);
+        if ($objPage) {
+            $this->isXhtml = ('xhtml' === $objPage->outputFormat);
+        }
 
         if (!isset($attributes['isSubmitCallback'])) {
             $this->loadDcaConfig();
@@ -328,7 +330,7 @@ class MultiFileUpload extends FileUpload
 
     protected function getByteSize($size)
     {
-        if (!is_int($size)) {
+        if (!\is_int($size)) {
             // Convert the value to bytes
             if (false !== stripos($size, 'K')) {
                 $size = round(explode('K', $size)[0] * 1024);
@@ -339,7 +341,7 @@ class MultiFileUpload extends FileUpload
             }
         }
 
-        return (int)$size;
+        return (int) $size;
     }
 
     /**
