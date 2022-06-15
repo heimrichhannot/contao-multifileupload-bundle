@@ -441,7 +441,13 @@ class FormMultiFileUpload extends Upload
         $attributes['timeout'] = (int) (isset($attributes['timeout']) ? $attributes['timeout'] : (ini_get('max_execution_time') ?: 120)) * 1000;
 
         if (isset($attributes['value']) && !\is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
-            $attributes['value'] = json_decode($attributes['value']);
+            $value = json_decode($attributes['value']);
+
+            if (!$value) {
+                // Fix encoded json array values
+                $value = json_decode(html_entity_decode($attributes['value']));
+            }
+            $attributes['value'] = $value;
         }
 
         // bin to string -> never pass binary to the widget!!
