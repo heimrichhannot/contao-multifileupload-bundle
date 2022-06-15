@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.4] - 2022-06-15
+- Fixed: values get lost if form has error
+
 ## [1.5.3] - 2022-06-07
 - Fixed: warnings with php 8
 
