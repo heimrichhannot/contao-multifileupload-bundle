@@ -1,26 +1,21 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
 
-namespace HeimrichHannot\MultiFileUploadBundle\EventListener;
+namespace HeimrichHannot\MultiFileUploadBundle\EventListener\Contao;
 
-use Contao\DataContainer;
+use Contao\CoreBundle\ServiceAnnotation\Hook;
 
+/**
+ * @Hook("getAttributesFromDca")
+ */
 class GetAttributesFromDcaListener
 {
-    /**
-     * @param array         $attributes
-     * @param DataContainer $dc
-     *
-     * @return array
-     *
-     * @Hook("getAttributesFromDca")
-     */
-    public function onGetAttributesFromDca(array $attributes, $dc = null): array
+    public function __invoke(array $attributes, $context = null): array
     {
         if ('multifileupload' === $attributes['type']) {
             $attributes['id'] = $attributes['name'] = $attributes['strField'] =
