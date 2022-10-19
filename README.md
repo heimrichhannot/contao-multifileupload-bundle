@@ -1,7 +1,7 @@
 
-![](https://img.shields.io/packagist/v/heimrichhannot/contao-multifileupload-bundle.svg)
-![](https://img.shields.io/packagist/l/heimrichhannot/contao-multifileupload-bundle.svg)
-![](https://img.shields.io/packagist/dt/heimrichhannot/contao-multifileupload-bundle.svg)
+[![](https://img.shields.io/packagist/v/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
+[![](https://img.shields.io/packagist/l/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
+[![](https://img.shields.io/packagist/dt/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
 [![](https://img.shields.io/travis/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://travis-ci.org/heimrichhannot/contao-multifileupload-bundle/)
 [![](https://img.shields.io/coveralls/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://coveralls.io/github/heimrichhannot/contao-multifileupload-bundle)
 
