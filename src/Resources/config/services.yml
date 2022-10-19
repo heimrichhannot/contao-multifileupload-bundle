@@ -5,6 +5,8 @@ services:
   HeimrichHannot\MultiFileUploadBundle\:
     resource: '../../{EventListener}/*'
     autoconfigure: true
+    bind:
+      $logger: '@monolog.logger.contao'
 
   HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset:
     public: true
