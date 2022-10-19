@@ -3,8 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2022-10-19
-- Changed: refactore hooks to newer contao standards ([#44])
+- Changed: refactor hooks to newer contao standards ([#44])
 - Changed: raised dependencies for php and contao ([#44])
+- Changed: refactor encore bundle integration to encore contracts ([#45]) 
 
 ## [1.5.4] - 2022-06-15
 - Fixed: values get lost if form has error
@@ -231,6 +232,7 @@ All notable changes to this project will be documented in this file.
 
 - initial version
 
+[#45]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/45
 [#44]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/44
 [#32]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/32
 [#31]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/31
