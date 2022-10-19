@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -39,9 +39,7 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface, ConfigP
     /**
      * Allows a plugin to override extension configuration.
      *
-     * @param string           $extensionName
-     * @param array            $extensionConfigs
-     * @param ContainerBuilder $container
+     * @param string $extensionName
      *
      * @return
      */
@@ -61,7 +59,6 @@ class Plugin implements BundlePluginInterface, ExtensionPluginInterface, ConfigP
     public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig)
     {
         $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/services.yml');
-        $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/hooks.yml');
         $loader->load('@HeimrichHannotContaoMultiFileUploadBundle/Resources/config/parameters.yml');
     }
 }
