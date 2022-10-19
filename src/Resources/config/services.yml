@@ -3,12 +3,11 @@ services:
     autowire: true
 
   HeimrichHannot\MultiFileUploadBundle\:
-    resource: '../../{EventListener}/*'
+    resource: '../../{Asset,EventListener}/*'
     autoconfigure: true
     bind:
       $logger: '@monolog.logger.contao'
 
   HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset:
     public: true
-    calls:
-      - [ setEncoreFrontendAsset, [ '@?HeimrichHannot\EncoreBundle\Asset\FrontendAsset' ] ]
+    autoconfigure: true
