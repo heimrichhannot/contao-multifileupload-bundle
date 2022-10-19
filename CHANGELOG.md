@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2022-10-19
+## [1.6.0] - 2022-10-19
 - Changed: refactor hooks to newer contao standards ([#44])
 - Changed: raised dependencies for php and contao ([#44])
 - Changed: refactor encore bundle integration to encore contracts ([#45]) 
