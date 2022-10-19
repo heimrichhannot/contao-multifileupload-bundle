@@ -1,12 +1,14 @@
 services:
-    _defaults:
-        autowire: true
+  _defaults:
+    autowire: true
 
-    HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset:
-        public: true
-        calls:
-            - [setEncoreFrontendAsset, ['@?HeimrichHannot\EncoreBundle\Asset\FrontendAsset']]
+  HeimrichHannot\MultiFileUploadBundle\:
+    resource: '../../{EventListener}/*'
+    autoconfigure: true
+    bind:
+      $logger: '@monolog.logger.contao'
 
-    huh.multifileupload.listener.hooks:
-        class: HeimrichHannot\MultiFileUploadBundle\EventListener\HookListener
-        public: true
+  HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset:
+    public: true
+    calls:
+      - [ setEncoreFrontendAsset, [ '@?HeimrichHannot\EncoreBundle\Asset\FrontendAsset' ] ]
