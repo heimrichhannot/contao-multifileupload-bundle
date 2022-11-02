@@ -71,7 +71,7 @@ class FilesHandler
             }
 
             if ($file->renameTo($target)) {
-                $targets = $target;
+                $targets[] = $target;
                 $fileModel = $file->getModel();
 
                 if (!$fileModel && Dbafs::shouldBeSynchronized($target)) {

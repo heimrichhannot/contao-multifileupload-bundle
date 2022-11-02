@@ -217,13 +217,14 @@ class FormMultiFileUpload extends Upload
         }
 
         $arrFiles = json_decode($input);
-        $uploadFolder = FilesModel::findByUuid($this->uploadFolder);
-
-        if (null === $uploadFolder) {
-            throw new \Exception('Invalid upload folder ID '.$this->uploadFolder);
-        }
 
         if (!$this->strTable && !empty($arrFiles)) {
+            $uploadFolder = FilesModel::findByUuid($this->uploadFolder);
+
+            if (null === $uploadFolder) {
+                throw new \Exception('Invalid upload folder ID '.$this->uploadFolder);
+            }
+
             System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path);
         }
 
