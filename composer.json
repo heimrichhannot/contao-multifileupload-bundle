@@ -19,6 +19,7 @@
     "heimrichhannot/contao-encore-contracts": "^1.0",
     "heimrichhannot/contao-utils-bundle": "^2.222",
     "psr/log": "^1.0 || ^2.0 || ^3.0",
+    "symfony/polyfill-php80": "^1.26",
     "symfony/service-contracts": "^1.0 || ^2.0 || ^3.0"
   },
   "require-dev": {
@@ -33,9 +34,6 @@
   },
   "suggest": {
     "heimrichhannot/contao-encore-bundle": "Asset management with Symfony Encore."
-  },
-  "conflict": {
-    "heimrichhannot/contao-encore-bundle": "<1.5"
   },
   "autoload": {
     "psr-4": {
