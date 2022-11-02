@@ -9,9 +9,10 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Asset;
 
 use HeimrichHannot\EncoreContracts\EncoreEntry;
+use HeimrichHannot\EncoreContracts\EncoreExtensionInterface;
 use HeimrichHannot\MultiFileUploadBundle\HeimrichHannotContaoMultiFileUploadBundle;
 
-class EncoreExtension implements \HeimrichHannot\EncoreContracts\EncoreExtensionInterface
+class EncoreExtension implements EncoreExtensionInterface
 {
     /**
      * {@inheritDoc}

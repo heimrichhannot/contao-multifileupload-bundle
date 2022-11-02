@@ -10,7 +10,6 @@ namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
 use Contao\Config;
 use Contao\Database;
-use Contao\DataContainer;
 use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
@@ -25,10 +24,11 @@ use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
 use HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\EventListener\Callback\OnSubmitCallbackListener;
 use HeimrichHannot\MultiFileUploadBundle\Exception\InvalidImageException;
+use HeimrichHannot\MultiFileUploadBundle\File\FilesHandler;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use HeimrichHannot\UtilsBundle\Image\ImageUtil;
-use Model\Collection;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -37,7 +37,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FormMultiFileUpload extends Upload
 {
-    const UNIQID_PREFIX = 'mfuid';
+    public const UNIQID_PREFIX = 'mfuid';
 
     protected $strTemplate = 'form_multifileupload';
 
@@ -93,114 +93,13 @@ class FormMultiFileUpload extends Upload
 
         if ($this->strTable) {
             // add onsubmit_callback at first onsubmit_callback position: move files after form submission
-            if (\is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] ?? null)) {
-                $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']] + $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'];
-            } else {
-                $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = ['multifileupload_moveFiles' => ['HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload', 'moveFiles']];
-            }
+            $GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] = array_merge(
+                ['multifileupload_moveFiles' => [OnSubmitCallbackListener::class, 'moveFiles']],
+                ($GLOBALS['TL_DCA'][$this->strTable]['config']['onsubmit_callback'] ?? [])
+            );
         }
 
         $this->container->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function moveFiles(DataContainer $dc)
-    {
-        $container = System::getContainer();
-
-        $arrPost = $this->container->get('huh.request')->getAllPost();
-
-        foreach ($arrPost as $key => $value) {
-            if (!isset($GLOBALS['TL_DCA'][$dc->table]['fields'][$key])) {
-                continue;
-            }
-
-            $arrData = $GLOBALS['TL_DCA'][$dc->table]['fields'][$key];
-
-            if (MultiFileUpload::NAME !== $arrData['inputType']) {
-                continue;
-            }
-
-            $arrFiles = StringUtil::deserialize($dc->activeRecord->{$key});
-
-            $strUploadFolder = $this->container->get('huh.utils.file')->getFolderFromDca($arrData['eval']['uploadFolder'], $dc);
-
-            if (null === $strUploadFolder) {
-                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['uploadNoUploadFolderDeclared'], $key, $container->getParameter('huh.multifileupload.upload_tmp')));
-            }
-
-            if (!\is_array($arrFiles)) {
-                $arrFiles = [$arrFiles];
-            }
-
-            /** @var Collection|FilesModel $filesModel */
-            $filesModel = $container->get('contao.framework')->getAdapter(FilesModel::class)->findMultipleByUuids($arrFiles);
-
-            if (null === $filesModel) {
-                continue;
-            }
-
-            $arrPaths = $filesModel->fetchEach('path');
-            $arrTargets = [];
-
-            // do not loop over $objFileModels as $objFile->close() will pull models away
-            foreach ($arrPaths as $strPath) {
-                $file = new File($strPath);
-                $target = $strUploadFolder.'/'.$file->name;
-
-                // uploadPathCallback
-                if (isset($arrData['uploadPathCallback']) && \is_array($arrData['uploadPathCallback'])) {
-                    foreach ($arrData['uploadPathCallback'] as $callback) {
-                        $target = System::importStatic($callback[0])->{$callback[1]}($target, $file, $dc) ?: $target;
-                    }
-                }
-
-                if ($container->get('huh.utils.string')->startsWith($file->path, ltrim($target, '/'))) {
-                    continue;
-                }
-
-                $target = $container->get('huh.utils.file')->getUniqueFileNameWithinTarget($target, static::UNIQID_PREFIX);
-                // delete file from database if file with same path do not exists
-                $databaseUtil = System::getContainer()->get('huh.utils.database');
-
-                // delete file from database if file with same path do not exists
-                if (null !== ($storedFiles = $databaseUtil->findResultsBy('tl_files', ['tl_files.path=?'], [$target]))) {
-                    foreach ($storedFiles->fetchAllAssoc() as $storedFile) {
-                        if (file_exists($storedFile['path'])) {
-                            continue;
-                        }
-                        $databaseUtil->delete('tl_files', 'tl_files.id=?', [$storedFile['id']]);
-                    }
-                }
-
-                if ($file->renameTo($target)) {
-                    $arrTargets[] = $target;
-                    $objModel = $file->getModel();
-
-                    // Update the database
-                    if (null === $objModel && $container->get('contao.framework')->getAdapter(Dbafs::class)->shouldBeSynchronized($target)) {
-                        $objModel = $container->get('contao.framework')->getAdapter(Dbafs::class)->addResource($target);
-                    }
-
-                    continue;
-                }
-
-                $arrTargets[] = $strPath;
-            }
-
-            // HOOK: post upload callback
-            if (isset($GLOBALS['TL_HOOKS']['postUpload']) && \is_array($GLOBALS['TL_HOOKS']['postUpload'])) {
-                foreach ($GLOBALS['TL_HOOKS']['postUpload'] as $callback) {
-                    if (\is_array($callback)) {
-                        System::importStatic($callback[0])->{$callback[1]}($arrTargets);
-                    } elseif (\is_callable($callback)) {
-                        $callback($arrTargets);
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -318,6 +217,16 @@ class FormMultiFileUpload extends Upload
         }
 
         $arrFiles = json_decode($input);
+        $uploadFolder = FilesModel::findByUuid($this->uploadFolder);
+
+        if (null === $uploadFolder) {
+            throw new \Exception('Invalid upload folder ID '.$this->uploadFolder);
+        }
+
+        if (!$this->strTable && !empty($arrFiles)) {
+            System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path);
+        }
+
         $arrDeleted = json_decode(($this->getPost('deleted_'.$this->strName)));
         $blnEmpty = false;
 
