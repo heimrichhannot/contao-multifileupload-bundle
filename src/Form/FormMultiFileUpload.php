@@ -77,6 +77,7 @@ class FormMultiFileUpload extends Upload
         }
 
         $attributes = $this->setAttributes($attributes);
+        $attributes = $this->setFormGeneratorAttributes($attributes);
 
         parent::__construct($attributes);
 
@@ -605,6 +606,23 @@ class FormMultiFileUpload extends Upload
             'filenameOrigEncoded' => $originalFileNameEncoded,
             'filenameSanitized' => $sanitizeFileName,
         ];
+    }
+
+    private function setFormGeneratorAttributes(array $attributes): array
+    {
+        if (isset($attributes['mf_maxFiles']) && is_numeric($attributes['mf_maxFiles'])) {
+            $attributes['maxFiles'] = (int) $attributes['mf_maxFiles'];
+
+            if ($attributes['maxFiles'] > 1) {
+                $attributes['fieldType'] = 'checkbox';
+            }
+        }
+
+        if (isset($attributes['mf_maxFileSize']) && is_numeric($attributes['mf_maxFileSize'])) {
+            $attributes['maxUploadSize'] = (int) $attributes['mf_maxFileSize'].'M';
+        }
+
+        return $attributes;
     }
 
     private function validateImageSize(UploadedFile $upload)
