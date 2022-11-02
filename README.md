@@ -2,8 +2,6 @@
 [![](https://img.shields.io/packagist/v/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
 [![](https://img.shields.io/packagist/l/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
 [![](https://img.shields.io/packagist/dt/heimrichhannot/contao-multifileupload-bundle.svg)](https://packagist.org/packages/heimrichhannot/contao-multifileupload-bundle)
-[![](https://img.shields.io/travis/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://travis-ci.org/heimrichhannot/contao-multifileupload-bundle/)
-[![](https://img.shields.io/coveralls/heimrichhannot/contao-multifileupload-bundle/master.svg)](https://coveralls.io/github/heimrichhannot/contao-multifileupload-bundle)
 
 # Contao Multi File Upload Bundle
 
@@ -16,10 +14,11 @@ Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com
 
 * javascript written in native javascript
 * support for jquery ajaxComplete and mootools ajax_change events
+* support for Contao Form Generator
 * support for [Encore Bundle](https://github.com/heimrichhannot/contao-encore-bundle)
 * support for [Formhybrid Compatibility Bundle Bundle](https://github.com/heimrichhannot/contao-formhybrid-compatibility-bundle) formhybrid_ajax_complete event 
 
-## Setup
+## Usage
 
 ### Install
 
@@ -31,7 +30,13 @@ Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com
    
 2. Update your database
 
-### Usage
+### Form Generator
+
+Create your form and use the `File-Upload (Multi File Upload)` field type.
+
+![](doc/img/screenshot_backend_formgenerator.png)
+
+### DCA
 
 Create a widget of inputType `multifileupload`. It is usable in the contao backend or in the contao frontend in combination with [Formhybrid](https://github.com/heimrichhannot/contao-formhybrid).
 
