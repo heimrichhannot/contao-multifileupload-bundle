@@ -34,7 +34,7 @@ Contao front end widget that provides [dropzonejs.com](http://www.dropzonejs.com
 
 Create your form and use the `File-Upload (Multi File Upload)` field type.
 
-![](doc/img/screenshot_backend_formgenerator.png)
+<img src="doc/img/screenshot_backend_formgenerator.png" style="border: 1px solid black;" alt="Screenshot of the multi column editor field type in the contao form generator backend.">
 
 ### DCA
 
