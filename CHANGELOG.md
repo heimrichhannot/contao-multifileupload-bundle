@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2022-11-02
+- Added: formgenerator support ([#46])
+
 ## [1.6.0] - 2022-10-19
 - Changed: refactor hooks to newer contao standards ([#44])
 - Changed: raised dependencies for php and contao ([#44])
@@ -232,6 +235,7 @@ All notable changes to this project will be documented in this file.
 
 - initial version
 
+[#46]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/46
 [#45]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/45
 [#44]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/44
 [#32]: https://github.com/heimrichhannot/contao-multifileupload-bundle/pull/32
