@@ -1,22 +1,23 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
 
 namespace HeimrichHannot\MultiFileUploadBundle\Response;
 
-use HeimrichHannot\AjaxBundle\Response\ResponseError;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
-class DropzoneErrorResponse extends ResponseError
+class DropzoneErrorResponse extends JsonResponse
 {
-    public function getOutputData()
+    public function __construct(string $message, int $status = self::HTTP_BAD_REQUEST, array $headers = [], bool $json = false)
     {
-        $outputData = parent::getOutputData();
-        $outputData->error = $outputData->message;
+        $data = [
+            'error' => $message,
+        ];
 
-        return $outputData;
+        parent::__construct($data, $status, $headers, $json);
     }
 }

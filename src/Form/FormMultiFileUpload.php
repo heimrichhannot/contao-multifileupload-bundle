@@ -24,8 +24,10 @@ use HeimrichHannot\AjaxBundle\Response\ResponseData;
 use HeimrichHannot\AjaxBundle\Response\ResponseSuccess;
 use HeimrichHannot\MultiFileUploadBundle\Asset\FrontendAsset;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Controller\UploadController;
 use HeimrichHannot\MultiFileUploadBundle\EventListener\Callback\OnSubmitCallbackListener;
 use HeimrichHannot\MultiFileUploadBundle\Exception\InvalidImageException;
+use HeimrichHannot\MultiFileUploadBundle\Exception\NoUploadException;
 use HeimrichHannot\MultiFileUploadBundle\File\FilesHandler;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
 use HeimrichHannot\UtilsBundle\Image\ImageUtil;
@@ -100,7 +102,22 @@ class FormMultiFileUpload extends Upload
             );
         }
 
-        $this->container->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+
+        if ($request->isXmlHttpRequest()) {
+            try {
+                $response = $this->container->get(UploadController::class)->upload(
+                    $request,
+                    $this->name
+                );
+                $response->send();
+
+                exit;
+            } catch (NoUploadException $e) {
+            }
+        }
+
+//        $this->container->get('huh.ajax')->runActiveAction(MultiFileUpload::NAME, MultiFileUpload::ACTION_UPLOAD, $this);
     }
 
     /**
@@ -319,6 +336,8 @@ class FormMultiFileUpload extends Upload
      */
     public function setAttributes(array $attributes)
     {
+        $container = System::getContainer();
+
         if (isset($attributes['minImageWidth']) && !\is_int($attributes['minImageWidth'])) {
             $attributes['minImageWidth'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['minImageWidth']);
         }
@@ -342,7 +361,16 @@ class FormMultiFileUpload extends Upload
         $attributes['uploadAction'] = $this->uploadAction;
 
         if (System::getContainer()->get('huh.utils.container')->isFrontend()) {
-            $attributes['uploadActionParams'] = http_build_query(System::getContainer()->get('huh.ajax.action')->getParams(MultiFileUpload::NAME, $this->uploadAction));
+            $attributes['uploadActionParams'] = '';
+
+//            $attributes['uploadActionParams'] = http_build_query(
+//                $container->get('huh.ajax.action')->getParams(MultiFileUpload::NAME, $this->uploadAction)
+//            );
+
+//            $attributes['uploadActionParams'] = $container->get('router')->generate('huh_multifileupload_upload', [
+//                'rt' => $container->get('contao.csrf.token_manager')->getDefaultTokenValue(),
+//                'name' => $attributes{},
+//            ]);
         }
 
         $attributes['parallelUploads'] = 1; // in order to provide new token for each ajax request, upload one by one
