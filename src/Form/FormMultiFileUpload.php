@@ -178,36 +178,42 @@ class FormMultiFileUpload extends Upload
             $this->deleteScheduledFiles($arrDeleted);
         }
 
-        if (\is_array($arrFiles)) {
-            foreach ($arrFiles as $k => $v) {
-                if (!Validator::isUuid($v)) {
-                    $this->addError($GLOBALS['TL_LANG']['ERR']['invalidUuid']);
+        if (!\is_array($arrFiles)) {
+            $arrFiles = [$arrFiles];
+        }
 
-                    return false;
-                }
+        $fileUtil = System::getContainer()->get('huh.utils.file');
+        $projectDir = System::getContainer()->getParameter('kernel.project_dir');
 
-                // cleanup non existing files on save
-                if (null === ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($v)) || !$file->exists()) {
-                    unset($arrFiles[$k]);
-
-                    continue;
-                }
-
-                $arrFiles[$k] = StringUtil::uuidToBin($v);
-            }
-        } else {
-            if (!Validator::isUuid($arrFiles)) {
+        foreach ($arrFiles as $k => $v) {
+            if (!Validator::isUuid($v)) {
                 $this->addError($GLOBALS['TL_LANG']['ERR']['invalidUuid']);
 
                 return false;
             }
 
-            // cleanup non existing files on save
-            if (null === ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($arrFiles)) || !$file->exists()) {
-                return false;
+            if (null === ($file = $fileUtil->getFileFromUuid($v)) || !$file->exists()) {
+                unset($arrFiles[$k]);
+
+                continue;
             }
 
-            $arrFiles = StringUtil::uuidToBin($arrFiles);
+            $arrFiles[$k] = StringUtil::uuidToBin($v);
+
+            if (System::getContainer()->get(Utils::class)->container()->isFrontend()) {
+                $_SESSION['FILES'][$this->strName.'__'.$k] = [
+                    'name' => $file->name,
+                    'type' => $file->mime,
+                    'tmp_name' => $projectDir.'/'.$file->path,
+                    'error' => 0,
+                    'size' => $file->size,
+                    'uploaded' => true,
+                    'uuid' => $v,
+                    'multifileupload' => true,
+                    'field' => $this->strName,
+                    'key' => $k,
+                ];
+            }
         }
 
         return $this->singleFile ? reset($arrFiles) : $arrFiles;
