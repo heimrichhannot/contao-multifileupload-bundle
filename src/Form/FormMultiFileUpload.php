@@ -108,7 +108,20 @@ class FormMultiFileUpload extends Upload
             try {
                 $response = $this->container->get(UploadController::class)->upload(
                     $request,
-                    $this->name
+                    $this->name,
+                    $this->objUploader,
+                    [
+                        'maxFiles' => $this->maxFiles,
+                        'extensions' => $this->extensions,
+                        'allowedMimeTypes' => $this->mimeTypes,
+                        'minImageWidth' >= $this->minImageWidth ?? 0,
+                        'minImageHeight' >= $this->minImageHeight ?? 0,
+                        'maxImageWidth' >= $this->maxImageWidth ?? 0,
+                        'maxImageHeight' >= $this->maxImageHeight ?? 0,
+                        'minImageWidthErrorText' => $this->minImageWidthErrorText,
+                        'minImageHeightErrorText' => $this->minImageHeightErrorText,
+                        'validateUploadCallback' => $this->validateUploadCallback,
+                    ]
                 );
                 $response->send();
 
