@@ -74,9 +74,7 @@ class ExecutePostActionsListener
                 ['contao' => new ContaoContext(__CLASS__.'::'.__METHOD__, TL_ERROR)]
             );
 
-            $objResponse = new DropzoneErrorResponse();
-            $objResponse->setMessage('Bad Request');
-            $objResponse->output();
+            $objResponse = new DropzoneErrorResponse('Bad Request');
         }
 
         if (null === $dc->activeRecord) {
@@ -86,7 +84,7 @@ class ExecutePostActionsListener
         // add dca attributes and instantiate current object to set widget attributes
         $attributes = $this->contaoFramework->getAdapter(Widget::class)->getAttributesFromDca($fields[$dc->table][$currentField], $currentField);
         $objUploader = new FormMultiFileUpload($attributes);
-        $objResponse = $objUploader->upload();
+//        $objResponse = $objUploader->upload();
 
         /* @var Response $objResponse */
         if ($objResponse instanceof Response) {

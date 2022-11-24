@@ -6,11 +6,14 @@
  * @license LGPL-3.0-or-later
  */
 
+use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
+use HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload;
+
 /*
  * Front end form fields
  */
-$GLOBALS['TL_FFL']['multifileupload'] = \HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload::class;
-$GLOBALS['BE_FFL']['multifileupload'] = \HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload::class;
+$GLOBALS['TL_FFL']['multifileupload'] = FormMultiFileUpload::class;
+$GLOBALS['BE_FFL']['multifileupload'] = BackendMultiFileUpload::class;
 
 /*
  * Ajax action

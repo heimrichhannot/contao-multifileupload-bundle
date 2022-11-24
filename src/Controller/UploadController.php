@@ -32,6 +32,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Csrf\CsrfToken;
 
 class UploadController extends AbstractController
 {
@@ -68,7 +69,9 @@ class UploadController extends AbstractController
             return new DropzoneErrorResponse('No Request Token!');
         }
 
-        $token = $this->tokenManager->getToken($request->request->get('REQUEST_TOKEN'));
+        $token = new CsrfToken('contao_csrf_token', $request->request->get('REQUEST_TOKEN'));
+
+//        $token = $this->tokenManager->getToken($request->request->get('REQUEST_TOKEN'));
 
         if (!$this->tokenManager->isTokenValid($token)) {
             return new DropzoneErrorResponse('Invalid Request Token!');
@@ -80,11 +83,7 @@ class UploadController extends AbstractController
 
         $tempUploadFolder = new Folder($this->parameterBag->get('huh.multifileupload.upload_tmp'));
 
-        // tmp directory is not public, mandatory for preview images
-        $tmpPath = $this->parameterBag->get('contao.web_dir').\DIRECTORY_SEPARATOR.$this->parameterBag->get('huh.multifileupload.upload_tmp');
-
-        if (!file_exists($tmpPath)
-        ) {
+        if (!$tempUploadFolder->isUnprotected()) {
             try {
                 $tempUploadFolder->unprotect();
                 (new Automator())->generateSymlinks();

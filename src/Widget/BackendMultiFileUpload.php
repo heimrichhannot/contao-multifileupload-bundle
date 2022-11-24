@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2020 Heimrich & Hannot GmbH
+ * Copyright (c) 2022 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -18,6 +18,9 @@ class BackendMultiFileUpload extends FormMultiFileUpload
 
     public function __construct($attributes = null)
     {
+        $GLOBALS['TL_CSS']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.css|screen|static';
+        $GLOBALS['TL_JAVASCRIPT']['dropzone'] = 'bundles/heimrichhannotcontaomultifileupload/assets/dropzone.js|static';
+        $GLOBALS['TL_JAVASCRIPT']['multifileupload'] = 'bundles/heimrichhannotcontaomultifileupload/assets/contao-multifileupload-bundle.js|static';
         parent::__construct($attributes);
     }
 }
