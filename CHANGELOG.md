@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2022-11-25
+- Added: notification center compatiblity
+- Added: PostUploadEvent
+- Fixed: token issues on frontend uploads
+- Deprecated: postUpload hook
+
 ## [1.7.0] - 2022-11-02
 - Added: formgenerator support ([#46])
 
