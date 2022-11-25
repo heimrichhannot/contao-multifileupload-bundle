@@ -47,6 +47,9 @@ class UploadController extends AbstractController
         $this->fileUtil = $fileUtil;
     }
 
+    /**
+     * @internal Not covered by bc promise
+     */
     public function upload(Request $request, string $fieldName, MultiFileUpload $uploader, array $options = []): Response
     {
         $options = array_merge([

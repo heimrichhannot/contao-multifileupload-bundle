@@ -153,7 +153,7 @@ class FormMultiFileUpload extends Upload
                 throw new \Exception('Invalid upload folder ID '.$this->uploadFolder);
             }
 
-            System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path);
+            System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path, '', $this->strName);
         }
 
         $arrDeleted = json_decode(($this->getPost('deleted_'.$this->strName)));

@@ -82,7 +82,7 @@ class OnSubmitCallbackListener
                 };
             }
 
-            $this->filesHandler->moveUploads($arrFiles, $strUploadFolder, $options);
+            $this->filesHandler->moveUploads($arrFiles, $strUploadFolder, $dc->table, $dc->field, $options);
         }
     }
 }

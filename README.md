@@ -155,3 +155,13 @@ Type | Arguments | Expected return value | Description
 uploadPathCallback | $strTarget, \File $objFile, \DataContainer $dc | $strTarget | Manipulate the upload path after form submission (run within onsubmit_callback).
 validateUploadCallback | \File $objFile, \Widget $objWidget | boolean(false) or string with frontend error message | Validate the uploaded file and add an error message if file does not pass validation, otherwise boolean(false) is expected.
 
+
+## Developers
+
+### PHP Events
+
+Events dispatched by symfony event dispatcher.
+
+| Event           | Description                                                       |
+|-----------------|-------------------------------------------------------------------|
+| PostUploadEvent | Allows working with the files after upload to upload destination. |
