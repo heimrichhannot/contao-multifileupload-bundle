@@ -22,6 +22,7 @@ use Contao\StringUtil;
 use Contao\System;
 use Contao\Widget;
 use HeimrichHannot\MultiFileUploadBundle\Widget\BackendMultiFileUpload;
+use HeimrichHannot\UtilsBundle\Util\Utils;
 
 class MultiFileUpload extends FileUpload
 {
@@ -173,14 +174,13 @@ class MultiFileUpload extends FileUpload
 
         $hideLabel = isset($this->data['hideLabel']) ? (bool) $this->data['hideLabel'] : false;
 
-        $objT->hideLabel = !(!$hideLabel
-                             && $this->container->get('huh.utils.container')->isFrontend());
+        $objT->hideLabel = !(!$hideLabel && $this->container->get(Utils::class)->container()->isFrontend());
         // store in session to validate on upload that field is allowed by user
         $fields = System::getContainer()->get('session')->get(static::SESSION_FIELD_KEY);
         $dca = $this->widget->arrDca;
 
-        if (!$dca) {
-            $dca = $GLOBALS['TL_DCA'][$this->widget->strTable]['fields'][$this->widget->strField];
+        if (!$dca && $this->widget->strField) {
+            $dca = $GLOBALS['TL_DCA'][$this->widget->strTable]['fields'][$this->widget->strField] ?? null;
         }
         $fields[$this->strTable][$this->id] = $dca;
         System::getContainer()->get('session')->set(static::SESSION_FIELD_KEY, $fields);

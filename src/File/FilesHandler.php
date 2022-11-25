@@ -12,15 +12,19 @@ use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\System;
+use HeimrichHannot\MultiFileUploadBundle\Event\PostUploadEvent;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class FilesHandler
 {
-    private ParameterBagInterface $parameterBag;
+    private ParameterBagInterface    $parameterBag;
+    private EventDispatcherInterface $eventDispatcher;
 
-    public function __construct(ParameterBagInterface $parameterBag)
+    public function __construct(ParameterBagInterface $parameterBag, EventDispatcherInterface $eventDispatcher)
     {
         $this->parameterBag = $parameterBag;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -31,7 +35,7 @@ class FilesHandler
      *
      * @internal Not covered by bc promise
      */
-    public function moveUploads(array $files, string $targetPath, array $options = []): void
+    public function moveUploads(array $files, string $targetPath, string $table = '', string $field = '', array $options = []): void
     {
         $options = array_merge([
             'uploadPathCallback' => null,
@@ -48,15 +52,17 @@ class FilesHandler
 
         $targets = [];
 
+        $fileModels = [];
+
         foreach ($paths as $path) {
             $file = new File($path);
-            $target = $targetPath.'/'.$file->name;
+            $target = $targetPath.\DIRECTORY_SEPARATOR.$file->name;
 
             if (\is_callable($options['uploadPathCallback'])) {
                 $target = $options['uploadPathCallback']($file, $target);
             }
 
-            if (str_starts_with($file->path, ltrim($target, '/'))) {
+            if (str_starts_with($file->path, ltrim($target, \DIRECTORY_SEPARATOR))) {
                 continue;
             }
 
@@ -71,21 +77,26 @@ class FilesHandler
             }
 
             if ($file->renameTo($target)) {
-                $targets[] = $target;
+                $path = $target;
                 $fileModel = $file->getModel();
 
                 if (!$fileModel && Dbafs::shouldBeSynchronized($target)) {
-                    Dbafs::addResource($target);
+                    $fileModel = Dbafs::addResource($target);
                 }
-
-                continue;
             }
 
+            $fileModels[] = $fileModel;
             $targets[] = $path;
         }
 
         // HOOK: post upload callback
         if (isset($GLOBALS['TL_HOOKS']['postUpload']) && \is_array($GLOBALS['TL_HOOKS']['postUpload'])) {
+            trigger_deprecation(
+                'heimrichhannot/contao-multifileupload-bundle',
+                '1.8',
+                'Using postUpload hook is deprecated and will no longer work in version 2.0. Use PostUploadEvent instead.'
+            );
+
             foreach ($GLOBALS['TL_HOOKS']['postUpload'] as $callback) {
                 if (\is_array($callback)) {
                     System::importStatic($callback[0])->{$callback[1]}($targets);
@@ -94,5 +105,7 @@ class FilesHandler
                 }
             }
         }
+
+        $this->eventDispatcher->dispatch(new PostUploadEvent($targets, $table, $field));
     }
 }

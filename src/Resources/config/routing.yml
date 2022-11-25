@@ -1,0 +1,3 @@
+heimrich_hannot_contao_multi_file_upload_bundle:
+  resource: "@HeimrichHannotContaoMultiFileUploadBundle/Controller/"
+  type: annotation
