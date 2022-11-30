@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1] - 2022-11-30
+- Fixed: initialize dropzone after `ajax_change` window event
+
 ## [1.8.0] - 2022-11-25
 - Added: notification center compatiblity
 - Added: PostUploadEvent
