@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1] - 2022-11-30
+- Fixed: initialize dropzone after `ajax_change` window event
+
 ## [1.7.0] - 2022-11-02
 - Added: formgenerator support ([#46])
 

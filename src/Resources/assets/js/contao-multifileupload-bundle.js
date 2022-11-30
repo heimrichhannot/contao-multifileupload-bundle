@@ -435,6 +435,10 @@ document.addEventListener('DOMContentLoaded', function () {
         window.addEvent('ajax_change', function () {
             MultiFileUpload.init();
         });
+    } else {
+        window.addEventListener('ajax_change', function () {
+            MultiFileUpload.init();
+        });
     }
 
     document.addEventListener('formhybrid_ajax_complete', function () {
