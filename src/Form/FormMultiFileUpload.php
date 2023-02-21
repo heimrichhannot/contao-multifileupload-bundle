@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022 Heimrich & Hannot GmbH
+ * Copyright (c) 2023 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -9,7 +9,6 @@
 namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
 use Contao\Database;
-use Contao\File;
 use Contao\FilesModel;
 use Contao\Input;
 use Contao\StringUtil;
@@ -92,7 +91,16 @@ class FormMultiFileUpload extends Upload
 
         $request = System::getContainer()->get('request_stack')->getCurrentRequest();
 
-        if ($request->isXmlHttpRequest()) {
+        if (
+            $request->isXmlHttpRequest()
+            && \in_array($request->request->get('action', ''), [
+                MultiFileUpload::ACTION_UPLOAD_BACKEND, MultiFileUpload::ACTION_UPLOAD,
+            ])
+            && (System::getContainer()->get(Utils::class)->container()->isBackend()
+                ? ($request->request->get('field', '') === $this->name)
+                : true
+            )
+        ) {
             try {
                 $response = $this->container->get(UploadController::class)->upload(
                     $request,

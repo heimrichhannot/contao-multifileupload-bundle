@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.2] - 2023-02-21
+- Fixed: issues if other widgets also do ajax requests in backend
+
 ## [1.8.1] - 2022-11-30
 - Fixed: initialize dropzone after `ajax_change` window event
 
