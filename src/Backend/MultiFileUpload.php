@@ -98,6 +98,8 @@ class MultiFileUpload extends FileUpload
             $this->isXhtml = ('xhtml' === $objPage->outputFormat);
         }
 
+        $this->previewContainerCssId = 'ctrl_'.$this->id.'_'.uniqid();
+
         if (!isset($attributes['isSubmitCallback'])) {
             $this->loadDcaConfig();
         }
@@ -426,7 +428,7 @@ class MultiFileUpload extends FileUpload
 
         $this->requestToken = RequestToken::get();
 
-        $this->previewsContainer = '#ctrl_'.$this->id.' .dropzone-previews';
+        $this->previewsContainer = '#'.$this->previewContainerCssId.' .dropzone-previews';
 
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
 

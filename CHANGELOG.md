@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.3] - 2023-05-15
+- Fixed: previews when there are multiple dropzones at once
+
 ## [1.8.2] - 2023-02-21
 - Fixed: issues if other widgets also do ajax requests in backend
 

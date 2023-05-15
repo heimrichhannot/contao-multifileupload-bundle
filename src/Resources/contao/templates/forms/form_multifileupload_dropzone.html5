@@ -13,7 +13,7 @@
 <?php $this->endblock(); ?>
 
 <?php $this->block('field'); ?>
-    <div <?= $this->attributes; ?> class="multifileupload dropzone" id="ctrl_<?= $this->id; ?>">
+    <div <?= $this->attributes; ?> class="multifileupload dropzone" id="<?= $this->previewContainerCssId; ?>">
         <input type="hidden" name="formattedInitial_<?= $this->id ?>" value='<?= $this->initialFilesFormatted ?: '[]' ?>'>
         <input type="hidden" name="uploaded_<?= $this->id ?>" value='[]'>
         <input type="hidden" name="deleted_<?= $this->id ?>" value='[]'>
