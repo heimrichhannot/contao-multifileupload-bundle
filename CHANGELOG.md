@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.4] - 2023-06-15
+- Fixed: invalid request token
+
 ## [1.8.3] - 2023-05-15
 - Fixed: previews when there are multiple dropzones at once
 

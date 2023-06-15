@@ -72,7 +72,7 @@ class UploadController extends AbstractController
             return new DropzoneErrorResponse('No Request Token!');
         }
 
-        $token = new CsrfToken('contao_csrf_token', $request->request->get('REQUEST_TOKEN'));
+        $token = new CsrfToken('contao_csrf_token', $request->request->get('requestToken') ?? $request->request->get('REQUEST_TOKEN'));
 
 //        $token = $this->tokenManager->getToken($request->request->get('REQUEST_TOKEN'));
 
