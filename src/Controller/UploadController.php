@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022 Heimrich & Hannot GmbH
+ * Copyright (c) 2023 Heimrich & Hannot GmbH
  *
  * @license LGPL-3.0-or-later
  */
@@ -73,8 +73,6 @@ class UploadController extends AbstractController
         }
 
         $token = new CsrfToken('contao_csrf_token', $request->request->get('requestToken') ?? $request->request->get('REQUEST_TOKEN'));
-
-//        $token = $this->tokenManager->getToken($request->request->get('REQUEST_TOKEN'));
 
         if (!$this->tokenManager->isTokenValid($token)) {
             return new DropzoneErrorResponse('Invalid Request Token!');

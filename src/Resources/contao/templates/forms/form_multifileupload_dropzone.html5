@@ -13,7 +13,7 @@
 <?php $this->endblock(); ?>
 
 <?php $this->block('field'); ?>
-    <div <?= $this->attributes; ?> class="multifileupload dropzone" id="<?= $this->previewContainerCssId; ?>">
+    <div <?= $this->attributes; ?> class="multifileupload dropzone <?php if ($this->widget->hasErrors()): ?>is-invalid<?php endif; ?>" id="<?= $this->previewContainerCssId; ?>" <?php if ($this->widget->hasErrors()): ?>aria-describedby="help-block-ctrl_<?= $this->id ?>"<?php endif; ?>>
         <input type="hidden" name="formattedInitial_<?= $this->id ?>" value='<?= $this->initialFilesFormatted ?: '[]' ?>'>
         <input type="hidden" name="uploaded_<?= $this->id ?>" value='[]'>
         <input type="hidden" name="deleted_<?= $this->id ?>" value='[]'>
@@ -21,7 +21,7 @@
         <div class="fallback">
             <input type="file" name="<?= $this->name; ?><?php if ($this->uploadMultiple): ?>[]<?php endif; ?>"<?php if ($this->uploadMultiple): ?> multiple<?php endif; ?>>
         </div>
-        <div class="dz-container">
+        <div class="dz-container" tabindex="0">
             <div class="dz-default dz-message">
                 <span class="dz-message-head"><?= $this->labels['head'] ?? ''; ?></span>
                 <span class="dz-message-body"><?= $this->labels['body'] ?? ''; ?></span>
