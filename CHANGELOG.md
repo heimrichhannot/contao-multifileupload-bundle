@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.5] - 2023-09-05
+- Fixed: make uploadPath field mandatory
+- Fixed: accessibility issues
+
 ## [1.8.4] - 2023-06-15
 - Fixed: invalid request token
 
