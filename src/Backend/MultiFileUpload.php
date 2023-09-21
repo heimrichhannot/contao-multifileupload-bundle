@@ -76,8 +76,13 @@ class MultiFileUpload extends FileUpload
         $this->framework = $this->container->get('contao.framework');
         $this->data = $attributes;
         $this->widget = $widget;
+        $requestStack = System::getContainer()->get('request_stack');
+        $request = $requestStack->getCurrentRequest();
+        $file = null;
 
-        $file = $this->container->get('huh.request')->getGet('file', true);
+        if ($request) {
+            $file = $request->query->get('file');
+        }
 
         // Send the file to the browser
         if (!empty($file)) {
