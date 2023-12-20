@@ -33,6 +33,11 @@ class FormGeneratorListener
                 continue;
             }
 
+            if (!is_array($submittedData[$fileData['field']])) {
+                unset($submittedData[$fileData['field']]);
+                break;
+            }
+
             if (isset($submittedData[$fileData['field']][$fileData['key']])) {
                 unset($submittedData[$fileData['field']][$fileData['key']]);
             }
