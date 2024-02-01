@@ -10,6 +10,7 @@ namespace HeimrichHannot\MultiFileUploadBundle\EventListener\Contao;
 
 use Contao\CoreBundle\ServiceAnnotation\Hook;
 use Contao\Form;
+use Contao\StringUtil;
 
 class FormGeneratorListener
 {
@@ -33,8 +34,17 @@ class FormGeneratorListener
                 continue;
             }
 
-            if (isset($submittedData[$fileData['field']][$fileData['key']])) {
-                unset($submittedData[$fileData['field']][$fileData['key']]);
+            if (isset($submittedData[$fileData['field']])) {
+                if (!is_array($submittedData[$fileData['field']][$fileData['key']])) {
+                    $submittedField = StringUtil::deserialize($submittedData[$fileData['field']]);
+                    if (is_array($submittedField)) {
+                        unset($submittedField[$fileData['key']]);
+                        $submittedData[$fileData['field']] = serialize($submittedField);
+                    }
+                } else {
+                    unset($submittedData[$fileData['field']][$fileData['key']]);
+                }
+
             }
 
             if (empty($submittedData[$fileData['field']])) {

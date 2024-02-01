@@ -359,7 +359,7 @@ class FormMultiFileUpload extends Upload
         if (isset($attributes['mf_maxFiles']) && is_numeric($attributes['mf_maxFiles'])) {
             $attributes['maxFiles'] = (int) $attributes['mf_maxFiles'];
 
-            if ($attributes['maxFiles'] > 1) {
+            if ($attributes['maxFiles'] !== 1) {
                 $attributes['fieldType'] = 'checkbox';
             }
         }
