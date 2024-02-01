@@ -52,6 +52,10 @@ class FormMultiFileUpload extends Upload
 
     public function __construct($attributes = null)
     {
+        if ($this->isFormGeneratorBackedView()) {
+            return;
+        }
+
         $this->container = System::getContainer();
 
         // this is the case for 'onsubmit_callback' => 'multifileupload_moveFiles'
@@ -366,4 +370,24 @@ class FormMultiFileUpload extends Upload
 
         return $attributes;
     }
+
+    public function parse($arrAttributes = null)
+    {
+        if ($this->isFormGeneratorBackedView()) {
+            return '<div class="additionalFiles">
+                <div class="multifileupload dropzone" style="padding:5px;">
+                <input type="file" name="' . $this->strName . '[]" class="tl_upload_field" onfocus="Backend.getScrollOffset()" multiple>
+                </div>
+            </div>';
+        }
+
+        return parent::parse($arrAttributes);
+    }
+
+    private function isFormGeneratorBackedView(): bool
+    {
+        return (System::getContainer()->get(Utils::class)->container()->isBackend() && Input::get('do') === 'form' && Input::get('act') !== 'edit');
+    }
+
+
 }

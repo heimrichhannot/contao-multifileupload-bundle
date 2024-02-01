@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - 2024-02-01
+- Fixed: exception in form generator when no uploadField is set
+
 ## [1.8.6] - 2023-09-21
 - Fixed: usage of request bundle
 
