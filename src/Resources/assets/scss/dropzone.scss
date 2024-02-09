@@ -21,6 +21,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+@use 'sass:math';
+
 @mixin keyframes($name) {
   @-webkit-keyframes #{$name} {
     @content;
@@ -355,8 +357,8 @@
       display: block;
       top: 50%;
       left: 50%;
-      margin-left: -($image-width/2);
-      margin-top: -($image-height/2);
+      margin-left: math.div($image-width, -2);
+      margin-top: math.div($image-height, -2);
 
       svg {
         display: block;
