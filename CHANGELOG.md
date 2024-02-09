@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.8] - 2024-02-09
+- Fixed: scss division deprecation
+
 ## [1.8.7] - 2024-02-01
 - Fixed: exception in form generator when no uploadField is set
 - Fixed: setting max files to zero not allowing multiple files in form generator
