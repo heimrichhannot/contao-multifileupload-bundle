@@ -103,7 +103,7 @@ class MultiFileUpload extends FileUpload
             $this->isXhtml = ('xhtml' === $objPage->outputFormat);
         }
 
-        $this->previewContainerCssId = 'ctrl_'.$this->id.'_'.uniqid();
+        $this->previewContainerCssId = 'ctrl_' . $this->id . '_' . uniqid();
 
         if (!isset($attributes['isSubmitCallback'])) {
             $this->loadDcaConfig();
@@ -176,10 +176,10 @@ class MultiFileUpload extends FileUpload
         $objT->attributes = $this->getAttributes($this->getDropZoneOptions());
         $objT->widget = $this->widget;
         $objT->name = $this->widget->name;
-        $objT->class = $objT->class.' '.$this->widget->name;
+        $objT->class = $objT->class . ' ' . $this->widget->name;
         $objT->class = trim($objT->class);
 
-        $hideLabel = isset($this->data['hideLabel']) ? (bool) $this->data['hideLabel'] : false;
+        $hideLabel = isset($this->data['hideLabel']) ? (bool)$this->data['hideLabel'] : false;
 
         $objT->hideLabel = !(!$hideLabel && $this->container->get(Utils::class)->container()->isFrontend());
         // store in session to validate on upload that field is allowed by user
@@ -348,7 +348,7 @@ class MultiFileUpload extends FileUpload
             }
         }
 
-        return (int) $size;
+        return (int)$size;
     }
 
     /**
@@ -356,9 +356,9 @@ class MultiFileUpload extends FileUpload
      *
      * @param null $maxUploadSize
      *
+     * @return mixed
      * @throws \Exception For backend admin users, if widget upload size exceeds php.ini size or settings upload size
      *
-     * @return mixed
      */
     protected function getMaximumUploadFileSize($maxUploadSize = null)
     {
@@ -369,13 +369,13 @@ class MultiFileUpload extends FileUpload
         $strError = null;
 
         if ($intMaxUploadSizeDca > $intMaxUploadSizeSettings) {
-            $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' ('.$intMaxUploadSizeDca.' Bytes) exceeds the limit in tl_settings ('.$intMaxUploadSizeSettings.' Bytes)';
+            $strError = 'The maximum upload size you defined in the dca for the field ' . $this->widget->name . ' (' . $intMaxUploadSizeDca . ' Bytes) exceeds the limit in tl_settings (' . $intMaxUploadSizeSettings . ' Bytes)';
         } else {
             if ($intMaxUploadSizeDca > $intMaxUploadSizePhp) {
-                $strError = 'The maximum upload size you defined in the dca for the field '.$this->widget->name.' ('.$intMaxUploadSizeDca.' Bytes) exceeds the limit in php.ini ('.$intMaxUploadSizePhp.' Bytes).';
+                $strError = 'The maximum upload size you defined in the dca for the field ' . $this->widget->name . ' (' . $intMaxUploadSizeDca . ' Bytes) exceeds the limit in php.ini (' . $intMaxUploadSizePhp . ' Bytes).';
             } else {
                 if ($intMaxUploadSizeSettings > $intMaxUploadSizePhp) {
-                    $strError = 'The maximum upload size you defined in tl_settings ('.$intMaxUploadSizeSettings.' Bytes) exceeds the limit in php.ini ('.$intMaxUploadSizePhp.' Bytes).';
+                    $strError = 'The maximum upload size you defined in tl_settings (' . $intMaxUploadSizeSettings . ' Bytes) exceeds the limit in php.ini (' . $intMaxUploadSizePhp . ' Bytes).';
                 }
             }
         }
@@ -404,13 +404,19 @@ class MultiFileUpload extends FileUpload
         // in MiB
         $this->maxFilesize = round(($this->getMaximumUploadFileSize($this->maxUploadSize) / 1024 / 1024), 2);
 
+        if (empty($this->extensions)) {
+            $extensions = StringUtil::trimsplit(',', strtolower(Config::get('uploadTypes')));
+        } else {
+            $extensions = is_array($this->extensions) ? $this->extensions : StringUtil::trimsplit(',', $this->extensions);
+        }
+
         $this->acceptedFiles = implode(
             ',',
             array_map(
                 function ($a) {
-                    return '.'.$a;
+                    return '.' . $a;
                 },
-                StringUtil::trimsplit(',', strtolower($this->extensions ?: Config::get('uploadTypes')))
+                $extensions
             )
         );
 
@@ -433,7 +439,7 @@ class MultiFileUpload extends FileUpload
 
         $this->requestToken = RequestToken::get();
 
-        $this->previewsContainer = '#'.$this->previewContainerCssId.' .dropzone-previews';
+        $this->previewsContainer = '#' . $this->previewContainerCssId . ' .dropzone-previews';
 
         $this->uploadMultiple = ('checkbox' === $this->fieldType);
 
@@ -472,10 +478,10 @@ class MultiFileUpload extends FileUpload
         if ('disabled' === $key || 'readonly' === $key || 'required' === $key || 'autofocus' === $key || 'multiple' === $key) {
             $value = $key;
 
-            return $this->isXhtml ? ' '.$key.'="'.$value.'"' : ' '.$key;
+            return $this->isXhtml ? ' ' . $key . '="' . $value . '"' : ' ' . $key;
         }
 
-        return ' '.$key.'="'.$value.'"';
+        return ' ' . $key . '="' . $value . '"';
     }
 
     /**
@@ -493,7 +499,7 @@ class MultiFileUpload extends FileUpload
             }
 
             // convert camelCase to hyphen, jquery.data() will make camelCase from hyphen again
-            $strKey = 'data-'.strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $strKey));
+            $strKey = 'data-' . strtolower(preg_replace('/(?<!^)[A-Z]/', '-$0', $strKey));
 
             $arrOptions[$strKey] = $varValue;
         }
@@ -527,16 +533,16 @@ class MultiFileUpload extends FileUpload
 
         if ($containerUtils->isFrontend()) {
             $strHref = System::getContainer()->get('huh.ajax.action')->removeAjaxParametersFromUrl(Environment::get('uri'));
-            $strHref .= ((Config::get('disableAlias') || false !== strpos($strHref, '?')) ? '&' : '?').'file='.System::urlEncode($file->value);
+            $strHref .= ((Config::get('disableAlias') || false !== strpos($strHref, '?')) ? '&' : '?') . 'file=' . System::urlEncode($file->value);
 
-            return 'window.open("'.$strHref.'", "_blank");';
+            return 'window.open("' . $strHref . '", "_blank");';
         } elseif ($containerUtils->isBackend()) {
             $popupWidth = 664;
             $popupHeight = 299;
 
             $href = System::getContainer()->get('router')->generate('contao_backend_popup', ['src' => base64_encode($file->value)]);
 
-            return 'Backend.openModalIframe({"width":"'.$popupWidth.'","title":"'.str_replace("'", "\\'", StringUtil::specialchars($strFileNameEncoded, false, true)).'","url":"'.$href.'","height":"'.$popupHeight.'"});';
+            return 'Backend.openModalIframe({"width":"' . $popupWidth . '","title":"' . str_replace("'", "\\'", StringUtil::specialchars($strFileNameEncoded, false, true)) . '","url":"' . $href . '","height":"' . $popupHeight . '"});';
         }
 
         return $strUrl;
@@ -553,11 +559,11 @@ class MultiFileUpload extends FileUpload
 
         $themeFolder = rtrim($this->mimeFolder ?: System::getContainer()->getParameter('huh.multifileupload.mime_theme_default'), '/');
 
-        if (!file_exists(TL_ROOT.'/'.$themeFolder.'/mimetypes.json')) {
+        if (!file_exists(TL_ROOT . '/' . $themeFolder . '/mimetypes.json')) {
             return null;
         }
 
-        $objMimeFile = new File($themeFolder.'/mimetypes.json');
+        $objMimeFile = new File($themeFolder . '/mimetypes.json');
 
         $objMines = json_decode($objMimeFile->getContent());
 
@@ -565,10 +571,10 @@ class MultiFileUpload extends FileUpload
             return null;
         }
 
-        if (!file_exists(TL_ROOT.'/'.$themeFolder.'/'.$objMines->{$file->extension})) {
+        if (!file_exists(TL_ROOT . '/' . $themeFolder . '/' . $objMines->{$file->extension})) {
             return null;
         }
 
-        return $themeFolder.'/'.$objMines->{$file->extension};
+        return $themeFolder . '/' . $objMines->{$file->extension};
     }
 }

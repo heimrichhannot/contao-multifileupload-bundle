@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.9] - 2024-05-16
+- Fixed: file extensions could be array
+
 ## [1.8.8] - 2024-02-09
 - Fixed: scss division deprecation
 
