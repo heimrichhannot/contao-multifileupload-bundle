@@ -21,6 +21,7 @@ use HeimrichHannot\MultiFileUploadBundle\Controller\UploadController;
 use HeimrichHannot\MultiFileUploadBundle\EventListener\Callback\OnSubmitCallbackListener;
 use HeimrichHannot\MultiFileUploadBundle\Exception\NoUploadException;
 use HeimrichHannot\MultiFileUploadBundle\File\FilesHandler;
+use HeimrichHannot\MultiFileUploadBundle\Upload\UploadConfiguration;
 use HeimrichHannot\UtilsBundle\Image\ImageUtil;
 use HeimrichHannot\UtilsBundle\Util\Utils;
 
@@ -105,23 +106,32 @@ class FormMultiFileUpload extends Upload
                 : true
             )
         ) {
+
+
+
+            $uploadConfig = new UploadConfiguration();
+            $uploadConfig->maxFiles = $this->maxFiles;
+            if (is_string($this->extensions)) {
+                $this->extensions = explode(',', $this->extensions);
+            } else {
+                $this->extensions = $this->extensions ?? [];
+            }
+
+            $uploadConfig->mimeTypes = $this->mimeTypes ?? [];
+            $uploadConfig->minImageWidth = $this->minImageWidth ?? 0;
+            $uploadConfig->minImageHeight = $this->minImageHeight ?? 0;
+            $uploadConfig->maxImageWidth = $this->maxImageWidth ?? 0;
+            $uploadConfig->maxImageHeight = $this->maxImageHeight ?? 0;
+            $uploadConfig->minImageWidthErrorText = $this->minImageWidthErrorText ?? null;
+            $uploadConfig->minImageHeightErrorText = $this->minImageHeightErrorText ?? null;
+            $uploadConfig->validateUploadCallback = $this->validateUploadCallback ?? [];
+
             try {
                 $response = $this->container->get(UploadController::class)->upload(
                     $request,
                     $this->name,
                     $this->objUploader,
-                    [
-                        'maxFiles' => $this->maxFiles,
-                        'extensions' => $this->extensions,
-                        'allowedMimeTypes' => $this->mimeTypes,
-                        'minImageWidth' >= $this->minImageWidth ?? 0,
-                        'minImageHeight' >= $this->minImageHeight ?? 0,
-                        'maxImageWidth' >= $this->maxImageWidth ?? 0,
-                        'maxImageHeight' >= $this->maxImageHeight ?? 0,
-                        'minImageWidthErrorText' => $this->minImageWidthErrorText,
-                        'minImageHeightErrorText' => $this->minImageHeightErrorText,
-                        'validateUploadCallback' => $this->validateUploadCallback,
-                    ]
+                    $uploadConfig
                 );
                 $response->send();
 

@@ -8,6 +8,7 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Controller;
 
+use Ausi\SlugGenerator\SlugGenerator;
 use Contao\Automator;
 use Contao\Config;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
@@ -15,7 +16,6 @@ use Contao\Dbafs;
 use Contao\File;
 use Contao\Folder;
 use Contao\StringUtil;
-use Contao\System;
 use Contao\Validator;
 use HeimrichHannot\MultiFileUploadBundle\Backend\MultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Exception\IllegalFileExtensionException;
@@ -24,7 +24,8 @@ use HeimrichHannot\MultiFileUploadBundle\Exception\InvalidImageException;
 use HeimrichHannot\MultiFileUploadBundle\Exception\NoUploadException;
 use HeimrichHannot\MultiFileUploadBundle\Form\FormMultiFileUpload;
 use HeimrichHannot\MultiFileUploadBundle\Response\DropzoneErrorResponse;
-use HeimrichHannot\UtilsBundle\File\FileUtil;
+use HeimrichHannot\MultiFileUploadBundle\Upload\UploadConfiguration;
+use HeimrichHannot\UtilsBundle\Util\Utils;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -38,32 +39,23 @@ class UploadController extends AbstractController
 {
     private ContaoCsrfTokenManager $tokenManager;
     private ParameterBagInterface  $parameterBag;
-    private FileUtil               $fileUtil;
+    private Utils $utils;
 
-    public function __construct(ContaoCsrfTokenManager $tokenManager, ParameterBagInterface $parameterBag, FileUtil $fileUtil)
+    public function __construct(ContaoCsrfTokenManager $tokenManager, ParameterBagInterface $parameterBag, Utils $utils)
     {
         $this->tokenManager = $tokenManager;
         $this->parameterBag = $parameterBag;
-        $this->fileUtil = $fileUtil;
+        $this->utils = $utils;
     }
 
     /**
      * @internal Not covered by bc promise
      */
-    public function upload(Request $request, string $fieldName, MultiFileUpload $uploader, array $options = []): Response
+    public function upload(Request $request, string $fieldName, MultiFileUpload $uploader, ?UploadConfiguration $configuration = null): Response
     {
-        $options = array_merge([
-            'maxFiles' => 10,
-            'extensions' => null,
-            'allowedMimeTypes' => null,
-            'minImageWidth' => 0,
-            'minImageHeight' => 0,
-            'maxImageWidth' => 0,
-            'maxImageHeight' => 0,
-            'minImageWidthErrorText' => null,
-            'minImageHeightErrorText' => null,
-            'validateUploadCallback' => null,
-        ], $options);
+        if (!$configuration) {
+            $configuration = new UploadConfiguration();
+        }
 
         $uuids = [];
         $varReturn = null;
@@ -98,7 +90,7 @@ class UploadController extends AbstractController
         // Multi-files upload at once
         if (\is_array($varFile)) {
             // prevent disk flooding
-            if (\count($varFile) > $options['maxFiles']) {
+            if (\count($varFile) > $configuration->maxFiles) {
                 return new DropzoneErrorResponse('Bulk file upload violation.');
             }
 
@@ -106,7 +98,7 @@ class UploadController extends AbstractController
              * @var UploadedFile
              */
             foreach ($varFile as $strKey => $objFile) {
-                $arrFile = $this->uploadFile($objFile, $uploader, $tempUploadFolder->path, $options);
+                $arrFile = $this->uploadFile($objFile, $uploader, $tempUploadFolder->path, $configuration);
                 $varReturn[] = $arrFile;
 
                 if (isset($varReturn['uuid']) && Validator::isUuid($arrFile['uuid'])) {
@@ -115,7 +107,7 @@ class UploadController extends AbstractController
             }
         } else {
             // Single-file upload
-            $varReturn = $this->uploadFile($varFile, $uploader, $tempUploadFolder->path, $options);
+            $varReturn = $this->uploadFile($varFile, $uploader, $tempUploadFolder->path, $configuration);
 
             if (isset($varReturn['uuid']) && Validator::isUuid($varReturn['uuid'])) {
                 $uuids[] = $varReturn['uuid'];
@@ -143,11 +135,13 @@ class UploadController extends AbstractController
      * @return array Returns array with file information on success. Returns false if no valid file, file cannot be moved or destination lies outside the
      *               contao upload directory.
      */
-    private function uploadFile(UploadedFile $uploadedFile, MultiFileUpload $uploader, string $uploadFolder, array $options)
+    private function uploadFile(UploadedFile $uploadedFile, MultiFileUpload $uploader, string $uploadFolder, UploadConfiguration $configuration)
     {
         $originalFileName = rawurldecode($uploadedFile->getClientOriginalName());
         $originalFileNameEncoded = rawurlencode($originalFileName);
-        $sanitizeFileName = $this->fileUtil->sanitizeFileName($uploadedFile->getClientOriginalName());
+
+        $file = new File($originalFileNameEncoded);
+        $sanitizeFileName = (new SlugGenerator())->generate($file->name, ['validChars' => 'a-z0-9_']).($file->extension ? '.'.strtolower($file->extension) : ''); ;
 
         if ($uploadedFile->getError()) {
             return $this->prepareErrorArray($uploadedFile->getError(), $originalFileNameEncoded, $sanitizeFileName);
@@ -156,14 +150,15 @@ class UploadController extends AbstractController
         $error = false;
 
         try {
-            $this->validateExtension($uploadedFile, $options['extensions']);
-            $this->validateMimeType($uploadedFile, $options['allowedMimeTypes']);
-            $this->validateImageSize($uploadedFile, $options);
+            $this->validateExtension($uploadedFile, $configuration);
+            $this->validateMimeType($uploadedFile, $configuration);
+            $this->validateImageSize($uploadedFile, $configuration);
         } catch (IllegalFileExtensionException | IllegalMimeTypeException | InvalidImageException $e) {
             return $this->prepareErrorArray($e->getMessage(), $originalFileNameEncoded, $sanitizeFileName);
         }
 
-        $targetFileName = $this->fileUtil->addUniqueIdToFilename($sanitizeFileName, FormMultiFileUpload::UNIQID_PREFIX);
+        $file = new File($sanitizeFileName);
+        $targetFileName =  $file->filename.uniqid(FormMultiFileUpload::UNIQID_PREFIX, true).($file->extension ? '.' .$file->extension : '');
 
         try {
             $uploadedFile = $uploadedFile->move(TL_ROOT.\DIRECTORY_SEPARATOR.$uploadFolder, $targetFileName);
@@ -207,23 +202,12 @@ class UploadController extends AbstractController
         }
 
         // validateUploadCallback
-        if (\is_array($options['validateUploadCallback'])) {
-            foreach ($options['validateUploadCallback'] as $callback) {
-                if (!isset($callback[0]) || !class_exists($callback[0])) {
-                    continue;
-                }
+        foreach ($configuration->validateUploadCallback as $callback) {
 
-                $objCallback = System::importStatic($callback[0]);
-
-                if (!isset($callback[1]) || !method_exists($objCallback, $callback[1])) {
-                    continue;
-                }
-
-                if ($errorCallback = $objCallback->{$callback[1]}($file, $this)) {
-                    $error = $errorCallback;
-
-                    break; // stop validation on first error
-                }
+            $error = $this->utils->dca()->explodePalette($callback, $file, $this);
+            if ($error) {
+                // stop validation on first error
+                break;
             }
         }
 
@@ -258,33 +242,29 @@ class UploadController extends AbstractController
         ];
     }
 
-    private function validateExtension(UploadedFile $objUploadFile, string $extensions = null): void
+    private function validateExtension(UploadedFile $objUploadFile, UploadConfiguration $configuration): void
     {
-        $strAllowed = $extensions ?? Config::get('uploadTypes');
+        if (!$configuration->extensions) {
+            $configuration = clone $configuration;
+            $strAllowed = Config::get('uploadTypes');
+            $configuration->extensions = StringUtil::trimsplit(',', $strAllowed);
+        }
 
-        $arrAllowed = StringUtil::trimsplit(',', $strAllowed);
+        $extension = strtolower($objUploadFile->getClientOriginalExtension());
 
-        $strExtension = strtolower($objUploadFile->getClientOriginalExtension());
-
-        if (!$strExtension || !\is_array($arrAllowed) || !\in_array($strExtension, $arrAllowed)) {
-            throw new IllegalFileExtensionException(sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $strExtension));
+        if (!\in_array($extension, $configuration->extensions)) {
+            throw new IllegalFileExtensionException(sprintf($GLOBALS['TL_LANG']['ERR']['illegalFileExtension'], $extension));
         }
     }
 
-    private function validateMimeType(UploadedFile $uploadedFile, string $mimeTypes = null): void
+    private function validateMimeType(UploadedFile $uploadedFile, UploadConfiguration $configuration): void
     {
-        $allowedMimeTypes = null;
-
-        if ($mimeTypes) {
-            $allowedMimeTypes = StringUtil::trimsplit(',', $mimeTypes);
-        }
-
-        if ($allowedMimeTypes) {
-            if (empty($allowedMimeTypes)) {
+        if ($configuration->mimeTypes) {
+            if (empty($configuration->mimeTypes)) {
                 return;
             }
 
-            if (\in_array($uploadedFile->getMimeType(), $allowedMimeTypes, true)) {
+            if (\in_array($uploadedFile->getMimeType(), $configuration->mimeTypes, true)) {
                 return;
             }
 
@@ -312,22 +292,20 @@ class UploadController extends AbstractController
         }
     }
 
-    private function validateImageSize(UploadedFile $uploadedFile, array $options): void
+    private function validateImageSize(UploadedFile $uploadedFile, UploadConfiguration $configuration): void
     {
-        $options = (object) $options;
-
-        $minWidth = $options->minImageWidth ?? 0;
-        $minHeight = $options->minImageHeight ?? 0;
-        $maxWidth = $options->maxImageWidth ?? Config::get('imageWidth') ?? 0;
-        $maxHeight = $options->maxImageHeight ?? Config::get('imageHeight') ?? 0;
+        $minWidth = $configuration->minImageWidth ?? 0;
+        $minHeight = $configuration->minImageHeight ?? 0;
+        $maxWidth = $configuration->maxImageWidth ?? 0;
+        $maxHeight = $configuration->maxImageHeight ?? 0;
 
         if ($imageSize = @getimagesize($uploadedFile->getPathname())) {
             if ($minWidth > 0 && $imageSize[0] < $minWidth) {
-                throw new InvalidImageException(sprintf($options->minImageWidthErrorText ?: $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $imageSize[0]));
+                throw new InvalidImageException(sprintf($configuration->minImageWidthErrorText ?? $GLOBALS['TL_LANG']['ERR']['minWidth'], $minWidth, $imageSize[0]));
             }
 
             if ($minHeight > 0 && $imageSize[1] < $minHeight) {
-                throw new InvalidImageException(sprintf($options->minImageHeightErrorText ?: $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $imageSize[1]));
+                throw new InvalidImageException(sprintf($configuration->minImageHeightErrorText ?? $GLOBALS['TL_LANG']['ERR']['minHeight'], $minHeight, $imageSize[1]));
             }
 
             // Image exceeds maximum image width
