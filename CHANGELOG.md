@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2024-06-06
+- Changed: added UploadConfiguration class to avoid type issues with configuration
+
 ## [1.8.9] - 2024-05-16
 - Fixed: file extensions could be array
 
