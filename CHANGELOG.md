@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.1] - 2025-03-19
+- Fixed: scss nesting rules for native css nesting compatibility
+
 ## [1.9.0] - 2024-06-06
 - Changed: added UploadConfiguration class to avoid type issues with configuration
 
