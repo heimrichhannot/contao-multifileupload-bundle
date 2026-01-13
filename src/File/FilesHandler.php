@@ -108,4 +108,6 @@ class FilesHandler
 
         $this->eventDispatcher->dispatch(new PostUploadEvent($targets, $table, $field));
     }
+
+
 }
