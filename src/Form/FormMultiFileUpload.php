@@ -136,8 +136,14 @@ class FormMultiFileUpload extends Upload
         $blnEmpty = false;
 
         $initialFiles = json_decode($this->getPost('formattedInitial_' . $this->strName));
-        if (!empty(array_filter($initialFiles))) {
+        if (is_array($initialFiles) && !empty(array_filter($initialFiles))) {
             foreach ($initialFiles as $initialFile) {
+                if (!is_object($initialFile || !property_exists($initialFile, 'uuid'))) {
+                    continue;
+                }
+                if (!Validator::isUuid($initialFile->uuid)) {
+                    continue;
+                }
                 $arrFiles[] = $initialFile->uuid;
             }
         }
@@ -235,8 +241,6 @@ class FormMultiFileUpload extends Upload
      */
     public function setAttributes(array $attributes)
     {
-        $container = System::getContainer();
-
         if (isset($attributes['minImageWidth']) && !\is_int($attributes['minImageWidth'])) {
             $attributes['minImageWidth'] = System::getContainer()->get(ImageUtil::class)->getPixelValue($attributes['minImageWidth']);
         }

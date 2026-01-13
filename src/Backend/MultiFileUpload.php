@@ -273,6 +273,9 @@ class MultiFileUpload extends FileUpload
             return false;
         }
         $file = new File($file);
+        if (!$file->exists()) {
+            return false;
+        }
 
         $this->addAllowedDownload($file->value);
 
