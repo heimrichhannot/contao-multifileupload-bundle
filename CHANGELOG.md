@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2026-01-13
+- Added: allow editing content with form generator widget
+
 ## [1.9.1] - 2025-03-19
 - Fixed: scss nesting rules for native css nesting compatibility
 
