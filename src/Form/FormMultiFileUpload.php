@@ -108,7 +108,6 @@ class FormMultiFileUpload extends Upload
         ) {
 
 
-
             $uploadConfig = new UploadConfiguration();
             $uploadConfig->maxFiles = $this->maxFiles;
             if (is_string($this->extensions)) {
@@ -150,7 +149,7 @@ class FormMultiFileUpload extends Upload
             return '';
         }
 
-        return sprintf('<label%s%s>%s%s%s</label>', ($this->blnForAttribute ? ' for="ctrl_'.$this->strId.'"' : ''), (('' !== $this->strClass) ? ' class="'.$this->strClass.'"' : ''), ($this->mandatory ? '<span class="invisible">'.$GLOBALS['TL_LANG']['MSC']['mandatory'].' </span>' : ''), $this->strLabel, ($this->mandatory ? '<span class="mandatory">*</span>' : ''));
+        return sprintf('<label%s%s>%s%s%s</label>', ($this->blnForAttribute ? ' for="ctrl_' . $this->strId . '"' : ''), (('' !== $this->strClass) ? ' class="' . $this->strClass . '"' : ''), ($this->mandatory ? '<span class="invisible">' . $GLOBALS['TL_LANG']['MSC']['mandatory'] . ' </span>' : ''), $this->strLabel, ($this->mandatory ? '<span class="mandatory">*</span>' : ''));
     }
 
     /**
@@ -172,13 +171,13 @@ class FormMultiFileUpload extends Upload
             $uploadFolder = FilesModel::findByUuid($this->uploadFolder);
 
             if (null === $uploadFolder) {
-                throw new \Exception('Invalid upload folder ID '.$this->uploadFolder);
+                throw new \Exception('Invalid upload folder ID ' . $this->uploadFolder);
             }
 
             System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path, '', $this->strName);
         }
 
-        $arrDeleted = json_decode(($this->getPost('deleted_'.$this->strName)));
+        $arrDeleted = json_decode(($this->getPost('deleted_' . $this->strName)));
         $blnEmpty = false;
 
         if (\is_array($arrFiles) && \is_array($arrDeleted)) {
@@ -223,10 +222,10 @@ class FormMultiFileUpload extends Upload
             $arrFiles[$k] = StringUtil::uuidToBin($v);
 
             if (System::getContainer()->get(Utils::class)->container()->isFrontend()) {
-                $_SESSION['FILES'][$this->strName.'__'.$k] = [
+                $_SESSION['FILES'][$this->strName . '__' . $k] = [
                     'name' => $file->name,
                     'type' => $file->mime,
-                    'tmp_name' => $projectDir.'/'.$file->path,
+                    'tmp_name' => $projectDir . '/' . $file->path,
                     'error' => 0,
                     'size' => $file->size,
                     'uploaded' => true,
@@ -306,7 +305,7 @@ class FormMultiFileUpload extends Upload
 
         $attributes['addRemoveLinks'] = isset($attributes['addRemoveLinks']) ? $attributes['addRemoveLinks'] : true;
 
-        $attributes['timeout'] = (int) (isset($attributes['timeout']) ? $attributes['timeout'] : (ini_get('max_execution_time') ?: 120)) * 1000;
+        $attributes['timeout'] = (int)(isset($attributes['timeout']) ? $attributes['timeout'] : (ini_get('max_execution_time') ?: 120)) * 1000;
 
         if (isset($attributes['value']) && !\is_array($attributes['value']) && !Validator::isBinaryUuid($attributes['value'])) {
             $value = json_decode($attributes['value']);
@@ -367,7 +366,7 @@ class FormMultiFileUpload extends Upload
     private function setFormGeneratorAttributes(array $attributes): array
     {
         if (isset($attributes['mf_maxFiles']) && is_numeric($attributes['mf_maxFiles'])) {
-            $attributes['maxFiles'] = (int) $attributes['mf_maxFiles'];
+            $attributes['maxFiles'] = (int)$attributes['mf_maxFiles'];
 
             if ($attributes['maxFiles'] !== 1) {
                 $attributes['fieldType'] = 'checkbox';
@@ -375,7 +374,7 @@ class FormMultiFileUpload extends Upload
         }
 
         if (isset($attributes['mf_maxFileSize']) && is_numeric($attributes['mf_maxFileSize'])) {
-            $attributes['maxUploadSize'] = (int) $attributes['mf_maxFileSize'].'M';
+            $attributes['maxUploadSize'] = (int)$attributes['mf_maxFileSize'] . 'M';
         }
 
         return $attributes;
@@ -393,6 +392,13 @@ class FormMultiFileUpload extends Upload
 
         return parent::parse($arrAttributes);
     }
+
+    public function generate()
+    {
+        $this->objUploader->value = $this->value;
+        return parent::generate();
+    }
+
 
     private function isFormGeneratorBackedView(): bool
     {

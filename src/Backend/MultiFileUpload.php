@@ -268,28 +268,30 @@ class MultiFileUpload extends FileUpload
      */
     public function prepareFile($uuid)
     {
-        if (null !== ($file = System::getContainer()->get('huh.utils.file')->getFileFromUuid($uuid)) && $file->exists()) {
-            $this->addAllowedDownload($file->value);
+        $file = System::getContainer()->get(Utils::class)->file()->getPathFromUuid($uuid);
+        if (!$file) {
+            return false;
+        }
+        $file = new File($file);
 
-            $arrReturn = [
-                // remove timestamp from filename
-                'name' => System::getContainer()->get('huh.utils.string')->pregReplaceLast('@_[a-f0-9]{13}@', $file->name),
-                'uuid' => StringUtil::binToUuid($file->getModel()->uuid),
-                'size' => $file->filesize,
-            ];
+        $this->addAllowedDownload($file->value);
 
-            if (null !== ($strImage = $this->getPreviewImage($file))) {
-                $arrReturn['dataURL'] = $strImage;
-            }
+        $arrReturn = [
+            // remove timestamp from filename
+            'name' => System::getContainer()->get(Utils::class)->string()->pregReplaceLast('@_[a-f0-9]{13}@', $file->name),
+            'uuid' => StringUtil::binToUuid($file->getModel()->uuid),
+            'size' => $file->filesize,
+        ];
 
-            if (null !== ($strInfoUrl = $this->getInfoAction($file))) {
-                $arrReturn['info'] = $strInfoUrl;
-            }
-
-            return $arrReturn;
+        if (null !== ($strImage = $this->getPreviewImage($file))) {
+            $arrReturn['dataURL'] = $strImage;
         }
 
-        return false;
+        if (null !== ($strInfoUrl = $this->getInfoAction($file))) {
+            $arrReturn['info'] = $strInfoUrl;
+        }
+
+        return $arrReturn;
     }
 
     public function addAllowedDownload(string $file)
