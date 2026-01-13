@@ -8,6 +8,7 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
+use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Contao\Database;
 use Contao\FilesModel;
 use Contao\Input;
@@ -174,11 +175,19 @@ class FormMultiFileUpload extends Upload
                 throw new \Exception('Invalid upload folder ID ' . $this->uploadFolder);
             }
 
-            System::getContainer()->get(FilesHandler::class)->moveUploads($arrFiles, $uploadFolder->path, '', $this->strName);
+            System::getContainer()->get(FilesHandler::class)
+                ->moveUploads($arrFiles, $uploadFolder->path, '', $this->strName);
         }
 
         $arrDeleted = json_decode(($this->getPost('deleted_' . $this->strName)));
         $blnEmpty = false;
+
+        $initialFiles = json_decode($this->getPost('formattedInitial_' . $this->strName));
+        if (!empty(array_filter($initialFiles))) {
+            foreach ($initialFiles as $initialFile) {
+                $arrFiles[] = $initialFile->uuid;
+            }
+        }
 
         if (\is_array($arrFiles) && \is_array($arrDeleted)) {
             $blnEmpty = empty(array_diff($arrFiles, $arrDeleted));
