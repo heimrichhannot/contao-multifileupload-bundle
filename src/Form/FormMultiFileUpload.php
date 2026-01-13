@@ -8,7 +8,6 @@
 
 namespace HeimrichHannot\MultiFileUploadBundle\Form;
 
-use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Contao\Database;
 use Contao\FilesModel;
 use Contao\Input;
@@ -50,15 +49,12 @@ class FormMultiFileUpload extends Upload
      * @var bool
      */
     protected $singleFile = false;
-    protected $container;
 
     public function __construct($attributes = null)
     {
         if ($this->isFormGeneratorBackedView()) {
             return;
         }
-
-        $this->container = System::getContainer();
 
         // this is the case for 'onsubmit_callback' => 'multifileupload_moveFiles'
         if (null === $attributes) {
@@ -83,7 +79,7 @@ class FormMultiFileUpload extends Upload
 
         $this->objUploader = new MultiFileUpload($attributes, $this);
 
-        $this->container->get(FrontendAsset::class)->addFrontendAssets();
+        System::getContainer()->get(FrontendAsset::class)->addFrontendAssets();
 
         $this->setVariables($attributes);
 
@@ -95,50 +91,7 @@ class FormMultiFileUpload extends Upload
             );
         }
 
-        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
-
-        if (
-            $request->isXmlHttpRequest()
-            && \in_array($request->request->get('action', ''), [
-                MultiFileUpload::ACTION_UPLOAD_BACKEND, MultiFileUpload::ACTION_UPLOAD,
-            ])
-            && (System::getContainer()->get(Utils::class)->container()->isBackend()
-                ? ($request->request->get('field', '') === $this->name)
-                : true
-            )
-        ) {
-
-
-            $uploadConfig = new UploadConfiguration();
-            $uploadConfig->maxFiles = $this->maxFiles;
-            if (is_string($this->extensions)) {
-                $this->extensions = explode(',', $this->extensions);
-            } else {
-                $this->extensions = $this->extensions ?? [];
-            }
-
-            $uploadConfig->mimeTypes = $this->mimeTypes ?? [];
-            $uploadConfig->minImageWidth = $this->minImageWidth ?? 0;
-            $uploadConfig->minImageHeight = $this->minImageHeight ?? 0;
-            $uploadConfig->maxImageWidth = $this->maxImageWidth ?? 0;
-            $uploadConfig->maxImageHeight = $this->maxImageHeight ?? 0;
-            $uploadConfig->minImageWidthErrorText = $this->minImageWidthErrorText ?? null;
-            $uploadConfig->minImageHeightErrorText = $this->minImageHeightErrorText ?? null;
-            $uploadConfig->validateUploadCallback = $this->validateUploadCallback ?? [];
-
-            try {
-                $response = $this->container->get(UploadController::class)->upload(
-                    $request,
-                    $this->name,
-                    $this->objUploader,
-                    $uploadConfig
-                );
-                $response->send();
-
-                exit;
-            } catch (NoUploadException $e) {
-            }
-        }
+        $this->processUpload();
     }
 
     /**
@@ -412,6 +365,64 @@ class FormMultiFileUpload extends Upload
     private function isFormGeneratorBackedView(): bool
     {
         return (System::getContainer()->get(Utils::class)->container()->isBackend() && Input::get('do') === 'form' && Input::get('act') !== 'edit');
+    }
+
+    /**
+     * @return void
+     */
+    private function processUpload(): void
+    {
+        if (System::getContainer()->get(Utils::class)->container()->isBackend()) {
+            return;
+        }
+
+        $request = System::getContainer()->get('request_stack')->getCurrentRequest();
+        if (!$request || !$request->isXmlHttpRequest()) {
+            return;
+        }
+
+        $field = $request->request->get('field', '');
+        if ($field !== $this->name) {
+            return;
+        }
+
+        $action = $request->request->get('action', '');
+        if (!in_array($action, [
+            MultiFileUpload::ACTION_UPLOAD_BACKEND,
+            MultiFileUpload::ACTION_UPLOAD,
+        ])) {
+            return;
+        }
+
+        $uploadConfig = new UploadConfiguration();
+        $uploadConfig->maxFiles = $this->maxFiles;
+        if (is_string($this->extensions)) {
+            $this->extensions = explode(',', $this->extensions);
+        } else {
+            $this->extensions = $this->extensions ?? [];
+        }
+
+        $uploadConfig->mimeTypes = $this->mimeTypes ?? [];
+        $uploadConfig->minImageWidth = $this->minImageWidth ?? 0;
+        $uploadConfig->minImageHeight = $this->minImageHeight ?? 0;
+        $uploadConfig->maxImageWidth = $this->maxImageWidth ?? 0;
+        $uploadConfig->maxImageHeight = $this->maxImageHeight ?? 0;
+        $uploadConfig->minImageWidthErrorText = $this->minImageWidthErrorText ?? null;
+        $uploadConfig->minImageHeightErrorText = $this->minImageHeightErrorText ?? null;
+        $uploadConfig->validateUploadCallback = $this->validateUploadCallback ?? [];
+
+        try {
+            $response = System::getContainer()->get(UploadController::class)->upload(
+                $request,
+                $this->name,
+                $this->objUploader,
+                $uploadConfig
+            );
+            $response->send();
+
+            exit;
+        } catch (NoUploadException $e) {
+        }
     }
 
 
